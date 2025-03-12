@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // User model with integrated NextAuth.js support
@@ -78,7 +78,7 @@ model Product {
   id          String   @id @default(cuid())
   name        String
   description String
-  price       Float    // Changed from Decimal to Float for SQLite compatibility
+  price       Decimal    // Changed from Float to Decimal for PostgreSQL compatibility
   inventory   Int      @default(0)
   isActive    Boolean  @default(true)
   sku         String   @unique
@@ -117,7 +117,7 @@ model ProductImage {
 model ProductVariant {
   id          String                 @id @default(cuid())
   name        String
-  price       Float?                 // Changed from Decimal to Float for SQLite compatibility
+  price       Decimal?                 // Changed from Float to Decimal for PostgreSQL compatibility
   sku         String                 @unique
   inventory   Int                    @default(0)
   productId   String
@@ -162,11 +162,11 @@ model Order {
   userId          String
   user            User      @relation(fields: [userId], references: [id])
   status          OrderStatus @default(PENDING)
-  total           Float     // Changed from Decimal to Float for SQLite compatibility
-  subTotal        Float     // Changed from Decimal to Float for SQLite compatibility
-  tax             Float     // Changed from Decimal to Float for SQLite compatibility
-  shipping        Float     // Changed from Decimal to Float for SQLite compatibility
-  discount        Float?    // Changed from Decimal to Float for SQLite compatibility
+  total           Decimal     // Changed from Float to Decimal for PostgreSQL compatibility
+  subTotal        Decimal     // Changed from Float to Decimal for PostgreSQL compatibility
+  tax             Decimal     // Changed from Float to Decimal for PostgreSQL compatibility
+  shipping        Decimal     // Changed from Float to Decimal for PostgreSQL compatibility
+  discount        Decimal?    // Changed from Float to Decimal for PostgreSQL compatibility
   couponCode      String?
   shippingAddressId String
   shippingAddress Address   @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
@@ -193,8 +193,8 @@ model OrderItem {
   variantId     String?
   variant       ProductVariant? @relation(fields: [variantId], references: [id])
   quantity      Int
-  price         Float   // Changed from Decimal to Float for SQLite compatibility
-  total         Float   // Changed from Decimal to Float for SQLite compatibility
+  price         Decimal   // Changed from Float to Decimal for PostgreSQL compatibility
+  total         Decimal   // Changed from Float to Decimal for PostgreSQL compatibility
   name          String  // Snapshot of product name at time of order
   sku           String  // Snapshot of product SKU at time of order
   variantName   String? // Snapshot of variant name at time of order
