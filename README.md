@@ -1,24 +1,92 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# Next.js E-commerce Application
 
-First, run the development server:
+This e-commerce application uses Next.js with App Router, Prisma, tRPC, and NextAuth.js to provide a fully-featured e-commerce platform with user management, product catalog, cart functionality, and order processing.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Technology Stack
+
+- **Next.js**: Frontend framework with App Router for page rendering
+- **Prisma**: Type-safe ORM for database access
+- **tRPC**: End-to-end typesafe API with efficient data fetching
+- **NextAuth.js**: Authentication and session management
+- **SQLite**: Database for local development (easily switched to PostgreSQL for production)
+- **TailwindCSS**: Utility-first CSS framework for styling
+
+## Project Configuration
+
+This project is configured to use [pnpm](https://pnpm.io/) as the package manager. The `.npmrc` file contains the following configuration:
+
+```
+engine-strict=true
+auto-install-peers=true
+shamefully-hoist=true
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- `engine-strict=true`: Ensures the engine requirements in package.json are followed
+- `auto-install-peers=true`: Automatically installs peer dependencies
+- `shamefully-hoist=true`: Improves compatibility with packages that expect Node.js modules structure
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Getting Started
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Clone the repository
+2. Configure your environment variables (copy `.env.example` to `.env` and update as needed)
+3. Run database migrations:
+
+```bash
+npx prisma migrate dev
+```
+
+4. Start the development server:
+
+```bash
+pnpm dev
+```
+
+5. Open [http://localhost:3000](http://localhost:3000) with your browser to use the application
+
+## API Routes
+
+The API is built using tRPC and provides the following functionality:
+
+- **User Management**: User registration, authentication, profile management
+- **Product Management**: Create, read, update, and delete products
+- **Category Management**: Organize products by categories
+- **Cart Functionality**: Add, update, and remove items from the cart
+- **Order Processing**: Create and manage orders
+
+## Authentication
+
+Authentication is handled by NextAuth.js with support for:
+
+- Email/Password authentication
+- Google OAuth integration
+- JWT-based sessions
+
+## Common pnpm Commands
+
+```bash
+# Install dependencies
+pnpm install
+
+# Install a new package
+pnpm add [package-name]
+
+# Install a dev dependency
+pnpm add -D [package-name]
+
+# Remove a package
+pnpm remove [package-name]
+
+# Run a script defined in package.json
+pnpm [script-name]
+
+# Build for production
+pnpm build
+
+# Start production server
+pnpm start
+```
 
 ## Learn More
 
