@@ -1,26 +1,26 @@
-"use client";
+"use client"
 
-import Image from "next/image";
-import Link from "next/link";
-import { type Product } from "@prisma/client";
+import Image from "next/image"
+import Link from "next/link"
+import { type Product } from "@prisma/client"
 
 interface ProductCardProps {
   product: Product & {
-    images?: { url: string }[];
-    category?: { name: string } | null;
-  };
+    images?: { url: string }[]
+    category?: { name: string } | null
+  }
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const imageUrl = product.images?.[0]?.url || "/product-placeholder.jpg";
+  const imageUrl = product.images?.[0]?.url || "/product-placeholder.jpg"
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(Number(product.price));
+  }).format(Number(product.price))
 
   return (
     <Link
-      href={`/products/${product.slug}`}
+      href={`/products/${product.id}`}
       className="group rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-shadow"
     >
       <div className="relative aspect-square overflow-hidden bg-gray-100">
@@ -42,5 +42,5 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="mt-2 font-semibold text-gray-900">{formattedPrice}</div>
       </div>
     </Link>
-  );
+  )
 }
