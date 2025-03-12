@@ -16,7 +16,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(product.price);
+  }).format(Number(product.price));
 
   return (
     <Link
