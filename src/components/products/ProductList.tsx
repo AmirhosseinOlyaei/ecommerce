@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { api } from "@/lib/trpc/client";
 import { ProductCard } from "./ProductCard";
-import { type Category, type Product } from "@prisma/client";
+import { type Product } from "@prisma/client";
+
+// Define Category interface locally since it's not in the Prisma client
+interface Category {
+  id: string;
+  name: string;
+}
 
 export function ProductList() {
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
