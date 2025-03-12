@@ -1,12 +1,13 @@
 import { z } from "zod";
-import { hash } from "bcryptjs";
-import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
+import { Prisma } from "@prisma/client";
 
 export const userRouter = createTRPCRouter({
   // Get current user profile
   me: protectedProcedure.query(async ({ ctx }) => {
-    const user = await ctx.prisma.user.findUnique({
+    // First check if user exists in our database
+    let user = await ctx.prisma.user.findUnique({
       where: { id: ctx.session.user.id },
       select: {
         id: true,
@@ -18,10 +19,28 @@ export const userRouter = createTRPCRouter({
       },
     });
 
+    // If user doesn't exist in our database, create it from Supabase data
     if (!user) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "User not found",
+      // Get Supabase user data
+      const supabaseUser = ctx.session.user;
+      
+      // Create user in our database
+      user = await ctx.prisma.user.create({
+        data: {
+          id: supabaseUser.id,
+          email: supabaseUser.email || "",
+          name: supabaseUser.user_metadata?.full_name || "User",
+          image: supabaseUser.user_metadata?.avatar_url || null,
+          role: (supabaseUser.user_metadata?.role?.toUpperCase() as "ADMIN" | "STAFF" | "CUSTOMER") || "CUSTOMER",
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+          createdAt: true,
+        },
       });
     }
 
@@ -150,17 +169,16 @@ export const userRouter = createTRPCRouter({
       z.object({
         name: z.string().min(1).optional(),
         email: z.string().email().optional(),
-        password: z.string().min(6).optional(),
         image: z.string().url().optional().nullable(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { password, ...userData } = input;
-
-      // If email is changing, check if it's already in use
-      if (userData.email) {
+      // Sync with Supabase if email is changing
+      if (input.email) {
+        // Note: Updating email would typically require re-verification
+        // This is just updating our local database, not the Supabase auth
         const existingUser = await ctx.prisma.user.findUnique({
-          where: { email: userData.email },
+          where: { email: input.email },
         });
 
         if (existingUser && existingUser.id !== ctx.session.user.id) {
@@ -171,13 +189,10 @@ export const userRouter = createTRPCRouter({
         }
       }
 
-      // Update user data
+      // Update user profile in our database
       const updatedUser = await ctx.prisma.user.update({
         where: { id: ctx.session.user.id },
-        data: {
-          ...userData,
-          ...(password ? { password: await hash(password, 12) } : {}),
-        },
+        data: input,
         select: {
           id: true,
           name: true,
@@ -187,6 +202,13 @@ export const userRouter = createTRPCRouter({
           createdAt: true,
         },
       });
+
+      // Update user metadata in Supabase
+      if (input.name) {
+        await ctx.supabase.auth.updateUser({
+          data: { full_name: input.name }
+        });
+      }
 
       return updatedUser;
     }),
@@ -202,28 +224,38 @@ export const userRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      // Check if user is admin
-      if (ctx.session.user.role !== "ADMIN") {
+      // Check if the current user has admin access
+      const currentUser = await ctx.prisma.user.findUnique({
+        where: { id: ctx.session.user.id },
+        select: { role: true },
+      });
+
+      if (!currentUser || currentUser.role !== "ADMIN") {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Unauthorized",
+          code: "FORBIDDEN",
+          message: "Insufficient permissions",
         });
       }
 
       const { limit, cursor, search, role } = input;
 
+      // Build the where clause
+      const where: Prisma.UserWhereInput = {};
+      if (search) {
+        where.OR = [
+          { name: { contains: search } },
+          { email: { contains: search } }
+        ];
+      }
+      if (role) {
+        where.role = role;
+      }
+
+      // Get one more item than requested to determine if there are more items
       const users = await ctx.prisma.user.findMany({
         take: limit + 1,
+        where,
         cursor: cursor ? { id: cursor } : undefined,
-        where: {
-          ...(search && {
-            OR: [
-              { name: { contains: search } },
-              { email: { contains: search } },
-            ],
-          }),
-          ...(role && { role }),
-        },
         orderBy: { createdAt: "desc" },
         select: {
           id: true,
@@ -232,75 +264,22 @@ export const userRouter = createTRPCRouter({
           image: true,
           role: true,
           createdAt: true,
-          _count: {
-            select: {
-              orders: true,
-              reviews: true,
-              addresses: true,
-            },
-          },
         },
       });
 
-      let nextCursor: typeof cursor | undefined = undefined;
-      if (users.length > limit) {
-        const nextItem = users.pop();
-        nextCursor = nextItem!.id;
+      // Check if there are more items
+      const hasMore = users.length > limit;
+      if (hasMore) {
+        users.pop();
       }
+
+      // Get the last item's cursor
+      const nextCursor = hasMore ? users[users.length - 1]?.id : undefined;
 
       return {
-        items: users,
+        users,
         nextCursor,
+        hasMore,
       };
-    }),
-
-  // ADMIN: Update user role (admin only)
-  updateUserRole: protectedProcedure
-    .input(
-      z.object({
-        userId: z.string(),
-        role: z.enum(["ADMIN", "STAFF", "CUSTOMER"]),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      // Check if user is admin
-      if (ctx.session.user.role !== "ADMIN") {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Unauthorized",
-        });
-      }
-
-      const { userId, role } = input;
-
-      // Prevent changing own role
-      if (userId === ctx.session.user.id) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Cannot change your own role",
-        });
-      }
-
-      const user = await ctx.prisma.user.findUnique({
-        where: { id: userId },
-      });
-
-      if (!user) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "User not found",
-        });
-      }
-
-      return ctx.prisma.user.update({
-        where: { id: userId },
-        data: { role },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-        },
-      });
     }),
 });

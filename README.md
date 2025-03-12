@@ -2,14 +2,14 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 # Next.js E-commerce Application
 
-This e-commerce application uses Next.js with App Router, Prisma, tRPC, and NextAuth.js to provide a fully-featured e-commerce platform with user management, product catalog, cart functionality, and order processing.
+This e-commerce application uses Next.js with App Router, Prisma, tRPC, and Supabase to provide a fully-featured e-commerce platform with user management, product catalog, cart functionality, and order processing.
 
 ## Technology Stack
 
 - **Next.js**: Frontend framework with App Router for page rendering
 - **Prisma**: Type-safe ORM for database access
 - **tRPC**: End-to-end typesafe API with efficient data fetching
-- **NextAuth.js**: Authentication and session management
+- **Supabase**: Authentication, user management, and storage
 - **SQLite**: Database for local development (easily switched to PostgreSQL for production)
 - **TailwindCSS**: Utility-first CSS framework for styling
 
@@ -57,11 +57,12 @@ The API is built using tRPC and provides the following functionality:
 
 ## Authentication
 
-Authentication is handled by NextAuth.js with support for:
+Authentication is handled by Supabase with support for:
 
 - Email/Password authentication
-- Google OAuth integration
-- JWT-based sessions
+- Social provider authentication (Google, GitHub, etc.)
+- Magic link authentication
+- Row-level security for advanced authorization
 
 ## Common pnpm Commands
 

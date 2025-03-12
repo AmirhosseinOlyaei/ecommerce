@@ -1,9 +1,9 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
-import { getServerSession } from "next-auth";
+import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
+import { createServerClient } from '@supabase/ssr';
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/server/db";
 
 /**
@@ -12,14 +12,53 @@ import { prisma } from "@/server/db";
  * This section defines the "contexts" that are available in the backend API.
  */
 
-export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const session = await getServerSession(authOptions);
+export const createTRPCContext = async (opts: FetchCreateContextFnOptions) => {
+  // Create a Supabase client for server-side requests
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name) {
+          // Safely handle headers which may be structured differently
+          // depending on the environment
+          const cookies = opts.req.headers.get('cookie') || '';
+          return cookies
+            .split(';')
+            .find(c => c.trim().startsWith(`${name}=`))
+            ?.split('=')[1];
+        },
+        set() {
+          // We don't need to set cookies in this context
+        },
+        remove() {
+          // We don't need to remove cookies in this context
+        },
+      },
+    }
+  );
 
-  return {
-    session,
-    prisma,
-    headers: opts.headers,
-  };
+  try {
+    // Get the user session
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user || null;
+
+    return {
+      session: user ? { user } : null,
+      prisma,
+      req: opts.req,
+      supabase
+    };
+  } catch (error) {
+    console.error('Error in tRPC context creation:', error);
+    // Return a default context even if authentication fails
+    return {
+      session: null,
+      prisma,
+      req: opts.req,
+      supabase
+    };
+  }
 };
 
 /**
