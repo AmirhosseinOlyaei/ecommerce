@@ -71,7 +71,7 @@ devDependencies:
     specifier: ^3
     version: 3.3.0
   '@tailwindcss/postcss':
-    specifier: ^4
+    specifier: ^4.0.13
     version: 4.0.13
   '@types/node':
     specifier: ^20
