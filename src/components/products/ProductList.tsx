@@ -1,30 +1,31 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { api } from "@/lib/trpc/client";
-import { ProductCard } from "./ProductCard";
-import { type Product } from "@prisma/client";
+import { useState } from "react"
+import { api } from "@/lib/trpc/client"
+import { ProductCard } from "./ProductCard"
+import { type Product } from "@prisma/client"
 
 // Define Category interface locally since it's not in the Prisma client
 interface Category {
-  id: string;
-  name: string;
+  id: string
+  name: string
 }
 
 export function ProductList() {
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
     undefined
-  );
+  )
 
   // Using tRPC to fetch products
   const { data, isLoading, error } = api.product.getAll.useQuery({
     limit: 12,
     categoryId: selectedCategory,
     onlyActive: true,
-  });
+  })
 
-  // Using tRPC to fetch categories
-  const { data: categories } = api.category.getAll.useQuery();
+  // Temporarily disabled until category router is implemented
+  // const { data: categories } = api.category.getAll.useQuery()
+  const categories: Category[] = [] // Empty array with proper type
 
   if (isLoading) {
     return (
@@ -34,7 +35,7 @@ export function ProductList() {
           <p className="mt-4 text-gray-600">Loading products...</p>
         </div>
       </div>
-    );
+    )
   }
 
   if (error) {
@@ -43,12 +44,12 @@ export function ProductList() {
         <h3 className="text-red-600 font-semibold">Error loading products</h3>
         <p className="text-gray-600 mt-2">{error.message}</p>
       </div>
-    );
+    )
   }
 
   return (
     <div className="space-y-6">
-      {/* Category filter */}
+      {/* Category filter - temporarily disabled because the category router is not implemented */}
       {categories && categories.length > 0 && (
         <div className="flex flex-wrap gap-2">
           <button
@@ -88,10 +89,10 @@ export function ProductList() {
         <div className="text-center p-8 bg-gray-50 rounded-lg">
           <h3 className="text-gray-600 font-semibold">No products found</h3>
           <p className="text-gray-500 mt-2">
-            Try adjusting your filters or check back later.
+            Try checking back later for new products.
           </p>
         </div>
       )}
     </div>
-  );
+  )
 }
