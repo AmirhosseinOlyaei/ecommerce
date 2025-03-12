@@ -405,7 +405,7 @@ export const categoryRouter = createTRPCRouter({
 });
 
 // Helper function to check if a category is a child of another
-async function isChildCategory(prisma: any, parentId: string, potentialChildId: string): Promise<boolean> {
+async function isChildCategory(prisma: import("@prisma/client").PrismaClient, parentId: string, potentialChildId: string): Promise<boolean> {
   const childCategories = await prisma.category.findMany({
     where: { parentId },
     select: { id: true },
