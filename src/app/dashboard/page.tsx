@@ -1,95 +1,245 @@
-'use client'
+"use client"
 
-import { useSupabase } from '@/components/auth/SupabaseProvider'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useSupabase } from "@/components/auth/SupabaseProvider"
+import { useRouter } from "next/navigation"
+import { useCallback, useEffect, useState } from "react"
 
 export default function DashboardPage() {
   const { user, signOut, isLoading, isAuthenticated } = useSupabase()
   const router = useRouter()
+  const [isNavigating, setIsNavigating] = useState(false)
 
-  console.log('[Dashboard] Rendering with state:', { 
-    isLoading, 
-    isAuthenticated, 
+  console.log("[Dashboard] Rendering with state:", {
+    isLoading,
+    isAuthenticated,
     hasUser: !!user,
     userId: user?.id,
-    email: user?.email
+    email: user?.email,
   })
 
   // Redirect to login if not authenticated and not loading
   useEffect(() => {
-    console.log('[Dashboard] useEffect running with:', { isLoading, isAuthenticated })
-    
-    if (!isLoading && !isAuthenticated) {
-      console.log('[Dashboard] Not authenticated, redirecting to login')
-      router.push('/login')
-    } else if (!isLoading && isAuthenticated) {
-      console.log('[Dashboard] Authenticated user:', { 
-        id: user?.id, 
-        email: user?.email 
-      })
+    console.log("[Dashboard] Running auth check effect")
+    // If loading, do nothing yet
+    if (isLoading) {
+      console.log("[Dashboard] Still loading, not redirecting")
+      return
     }
+
+    // If not authenticated, redirect to login
+    if (!isAuthenticated) {
+      console.log("[Dashboard] Not authenticated, redirecting to login")
+      router.push("/login")
+      return
+    }
+
+    console.log("[Dashboard] User is authenticated, not redirecting")
   }, [isLoading, isAuthenticated, router, user])
 
+  // Enhanced navigation function with navigation state
+  const handleNavigation = useCallback(
+    (path: string) => {
+      setIsNavigating(true)
+      console.log(`Navigating to: ${path}`)
+      router.push(path)
+    },
+    [router]
+  )
+
+  useEffect(() => {
+    if (isNavigating) {
+      const timer = setTimeout(() => setIsNavigating(false), 300)
+      return () => clearTimeout(timer)
+    }
+  }, [isNavigating])
+
+  console.log("[Dashboard] Rendering dashboard content for user:", user?.email)
+
   // Show loading state
-  if (isLoading) {
-    console.log('[Dashboard] Showing loading spinner')
+  if (isLoading || isNavigating) {
+    console.log("[Dashboard] Showing loading spinner")
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+        <div className="w-12 h-12 rounded-full border-t-2 border-b-2 border-gray-900 animate-spin dark:border-gray-100"></div>
       </div>
     )
   }
 
   // If not authenticated, don't render anything (redirecting will happen via useEffect)
   if (!isAuthenticated) {
-    console.log('[Dashboard] Not authenticated, returning null')
+    console.log("[Dashboard] Not authenticated, returning null")
     return null
   }
 
-  console.log('[Dashboard] Rendering dashboard content for user:', user?.email)
-
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="p-6 mx-auto max-w-7xl">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <button
-          onClick={() => {
-            console.log('[Dashboard] Sign out button clicked')
-            signOut()
-          }}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-        >
-          Sign Out
-        </button>
-      </div>
-
-      <div className="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">User Profile</h2>
-        <div className="space-y-2">
-          <p><strong>Email:</strong> {user?.email}</p>
-          <p><strong>User ID:</strong> {user?.id}</p>
-          <p><strong>Last Sign In:</strong> {new Date(user?.last_sign_in_at || '').toLocaleString()}</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+          Dashboard
+        </h1>
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={() => router.push("/products")}
+            className="px-4 py-2 text-white bg-blue-500 rounded-lg shadow-md transition dark-mode-bg-primary dark:hover:bg-blue-600 hover:bg-blue-600"
+          >
+            View Store Front
+          </button>
+          <button
+            onClick={() => {
+              console.log("[Dashboard] Sign out button clicked")
+              signOut()
+            }}
+            className="px-4 py-2 text-white bg-red-600 rounded transition dark:bg-red-700 dark:hover:bg-red-600 hover:bg-red-700"
+          >
+            Sign Out
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link href="/products" className="block bg-blue-50 hover:bg-blue-100 p-6 rounded-lg shadow transition">
-          <h3 className="text-lg font-semibold mb-2">Browse Products</h3>
-          <p className="text-gray-600">View our catalog of products</p>
-        </Link>
-        
-        <Link href="/orders" className="block bg-green-50 hover:bg-green-100 p-6 rounded-lg shadow transition">
-          <h3 className="text-lg font-semibold mb-2">Your Orders</h3>
-          <p className="text-gray-600">View your order history</p>
-        </Link>
-        
-        <Link href="/cart" className="block bg-purple-50 hover:bg-purple-100 p-6 rounded-lg shadow transition">
-          <h3 className="text-lg font-semibold mb-2">Shopping Cart</h3>
-          <p className="text-gray-600">View items in your cart</p>
-        </Link>
+      <div className="p-6 mb-6 max-w-7xl bg-white rounded-lg shadow dark:bg-gray-800 dark:shadow-gray-700">
+        <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-gray-100">
+          User Profile
+        </h2>
+        <div className="space-y-2 text-gray-700 dark:text-gray-300">
+          <p>
+            <strong className="text-gray-900 dark:text-gray-100">Email:</strong>{" "}
+            {user?.email}
+          </p>
+          <p>
+            <strong className="text-gray-900 dark:text-gray-100">
+              User ID:
+            </strong>{" "}
+            {user?.id}
+          </p>
+          <p>
+            <strong className="text-gray-900 dark:text-gray-100">
+              Last Sign In:
+            </strong>{" "}
+            {new Date(user?.last_sign_in_at || "").toLocaleString()}
+          </p>
+        </div>
       </div>
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        {/* Product Management Card */}
+        <div className="overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800">
+          <div className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 p-3 bg-blue-500 rounded-md">
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+              </div>
+              <div className="ml-5">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                  Products
+                </h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Manage your store products
+                </p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={() => handleNavigation("/dashboard/products")}
+                className="flex justify-center px-4 py-2 w-full text-sm font-medium text-white bg-blue-600 rounded-md border border-transparent shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600"
+              >
+                View Products
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Orders Card */}
+        <div className="overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800">
+          <div className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 p-3 bg-indigo-500 rounded-md">
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                  />
+                </svg>
+              </div>
+              <div className="ml-5">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                  Orders
+                </h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  View and manage customer orders
+                </p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={() => handleNavigation("/orders")}
+                className="flex justify-center px-4 py-2 w-full text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-indigo-700 dark:hover:bg-indigo-600"
+              >
+                View Orders
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Store Settings */}
+        <div className="overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800">
+          <div className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 p-3 bg-purple-500 rounded-md">
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                </svg>
+              </div>
+              <div className="ml-5">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                  Store Settings
+                </h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Configure your store settings
+                </p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={() => handleNavigation("/dashboard/settings")}
+                className="flex justify-center px-4 py-2 w-full text-sm font-medium text-white bg-purple-600 rounded-md border border-transparent shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 dark:bg-purple-700 dark:hover:bg-purple-600"
+              >
+                View Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 text-right"></div>
     </div>
   )
 }
