@@ -1,9 +1,16 @@
-'use client'
+"use client"
 
-import { useRouter, usePathname } from 'next/navigation'
-import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react'
-import type { Session, User, AuthChangeEvent } from '@supabase/supabase-js'
-import { getSupabaseClient } from '@/lib/supabase/client'
+import { useRouter, usePathname } from "next/navigation"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+} from "react"
+import type { Session, User, AuthChangeEvent } from "@supabase/supabase-js"
+import { getSupabaseClient } from "@/lib/supabase/client"
 
 type SupabaseContextType = {
   user: User | null
@@ -18,7 +25,7 @@ const SupabaseContext = createContext<SupabaseContextType>({
   session: null,
   signOut: async () => {},
   isLoading: true,
-  isAuthenticated: false
+  isAuthenticated: false,
 })
 
 export const useSupabase = () => useContext(SupabaseContext)
@@ -31,103 +38,156 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const isRedirecting = useRef(false)
-  
+
   // Function to safely redirect (prevent redirect loops)
-  const safeRedirect = useCallback((path: string) => {
-    if (isRedirecting.current) {
-      console.log('[SupabaseProvider] Skipping redirect as one is already in progress')
-      return
-    }
-    
-    // Don't redirect if we're already on that path
-    if (pathname === path) {
-      console.log(`[SupabaseProvider] Already at ${path}, skipping redirect`)
-      return
-    }
-    
-    console.log(`[SupabaseProvider] Redirecting to ${path}`)
-    isRedirecting.current = true
-    
-    // Reset after a short delay to prevent rapid successive redirects
-    setTimeout(() => {
-      isRedirecting.current = false
-    }, 2000)
-    
-    router.push(path)
-  }, [pathname, router])
+  const safeRedirect = useCallback(
+    (path: string) => {
+      if (isRedirecting.current) {
+        console.log(
+          "[SupabaseProvider] Skipping redirect as one is already in progress"
+        )
+        return
+      }
+
+      // Don't redirect if we're already on that path
+      if (pathname === path) {
+        console.log(`[SupabaseProvider] Already at ${path}, skipping redirect`)
+        return
+      }
+
+      console.log(`[SupabaseProvider] Redirecting to ${path}`)
+      isRedirecting.current = true
+
+      // Reset after a short delay to prevent rapid successive redirects
+      setTimeout(() => {
+        isRedirecting.current = false
+      }, 2000)
+
+      router.push(path)
+    },
+    [pathname, router]
+  )
 
   useEffect(() => {
-    console.log('[SupabaseProvider] Initializing')
-    
+    console.log("[SupabaseProvider] Initializing")
+
     // Get the Supabase client using our singleton pattern
     const supabase = getSupabaseClient()
     if (!supabase) {
-      console.error('[SupabaseProvider] Failed to get Supabase client')
+      console.error("[SupabaseProvider] Failed to get Supabase client")
       setIsLoading(false)
       return () => {}
     }
-    
-    // Get initial session
-    const getSession = async () => {
+
+    // Get initial user
+    const getUserData = async () => {
       try {
-        console.log('[SupabaseProvider] Getting initial session')
-        const { data: { session } } = await supabase.auth.getSession()
-        console.log('[SupabaseProvider] Initial session result:', { 
-          hasSession: !!session,
-          userId: session?.user?.id,
-          email: session?.user?.email,
-          currentPath: pathname
-        })
-        
-        setSession(session)
-        setUser(session?.user ?? null)
-        setIsAuthenticated(!!session)
+        console.log("[SupabaseProvider] Getting initial user")
+        let fetchedUser
+        const {
+          data: { user: secureUser },
+        } = await supabase.auth.getUser()
+        if (secureUser) {
+          fetchedUser = secureUser
+          console.log("[SupabaseProvider] Retrieved user via getUser", {
+            userId: secureUser.id,
+          })
+        } else {
+          console.log(
+            "[SupabaseProvider] getUser returned null, falling back to getSession"
+          )
+          const {
+            data: { session },
+          } = await supabase.auth.getSession()
+          fetchedUser = session?.user ?? null
+          console.log("[SupabaseProvider] Retrieved user via getSession", {
+            userId: fetchedUser?.id,
+          })
+        }
+
+        setUser(fetchedUser)
+        setIsAuthenticated(!!fetchedUser)
+        setSession(null)
         setIsLoading(false)
-        
-        // Only redirect to dashboard if we have a session and we're not already there
-        // Skip redirect if we're in the auth callback flow
-        if (session && pathname !== '/dashboard' && !pathname.includes('/auth/callback')) {
-          safeRedirect('/dashboard')
+
+        if (fetchedUser && (pathname === "/" || pathname === "/login")) {
+          safeRedirect("/dashboard")
         }
       } catch (error) {
-        console.error('[SupabaseProvider] Error getting session:', error)
+        console.error("[SupabaseProvider] Error getting user:", error)
         setIsLoading(false)
       }
     }
-
-    getSession()
+    getUserData()
 
     // Subscribe to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
-      console.log('[SupabaseProvider] Auth state changed:', event, {
-        hasSession: !!session,
-        userId: session?.user?.id,
-        email: session?.user?.email,
-        currentPath: pathname
-      })
-      
-      setSession(session)
-      setUser(session?.user ?? null)
-      setIsAuthenticated(!!session)
-      
-      // Only redirect on sign-in if not already on dashboard and not in the auth flow
-      if (event === 'SIGNED_IN' && pathname !== '/dashboard' && !pathname.includes('/auth')) {
-        console.log('[SupabaseProvider] User signed in, redirecting to dashboard')
-        safeRedirect('/dashboard')
-      } else if (event === 'SIGNED_OUT' && !pathname.includes('/login')) {
-        console.log('[SupabaseProvider] User signed out, redirecting to login')
-        safeRedirect('/login')
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (event: AuthChangeEvent, session: Session | null) => {
+        console.log("[SupabaseProvider] Auth state changed:", event, {
+          hasSession: !!session,
+          userId: session?.user?.id,
+          email: session?.user?.email,
+          currentPath: pathname,
+        })
+
+        if (event === "SIGNED_IN") {
+          supabase.auth
+            .getUser()
+            .then(
+              async ({
+                data: { user: secureUser },
+              }: {
+                data: { user: User | null }
+              }) => {
+                let updatedUser: User | null = secureUser
+                if (!updatedUser) {
+                  console.log(
+                    "[SupabaseProvider] getUser returned null on auth change, falling back to getSession"
+                  )
+                  const {
+                    data: { session },
+                  } = await supabase.auth.getSession()
+                  updatedUser = session?.user ?? null
+                }
+                console.log("[SupabaseProvider] Updated user after sign in:", {
+                  hasUser: !!updatedUser,
+                  userId: updatedUser?.id,
+                })
+                setUser(updatedUser)
+                setIsAuthenticated(!!updatedUser)
+
+                if (
+                  updatedUser &&
+                  (pathname === "/" || pathname === "/login")
+                ) {
+                  console.log(
+                    "[SupabaseProvider] User signed in, redirecting to dashboard"
+                  )
+                  safeRedirect("/dashboard")
+                }
+              }
+            )
+        } else if (event === "SIGNED_OUT") {
+          console.log(
+            "[SupabaseProvider] User signed out, redirecting to login"
+          )
+          setUser(null)
+          setIsAuthenticated(false)
+          safeRedirect("/login")
+        }
       }
-    })
+    )
 
     return () => {
-      console.log('[SupabaseProvider] Cleaning up subscription')
+      console.log("[SupabaseProvider] Cleaning up subscription")
       subscription.unsubscribe()
     }
   }, [pathname, safeRedirect])
 
   const signOut = async () => {
-    console.log('[SupabaseProvider] Signing out user')
+    console.log("[SupabaseProvider] Signing out user")
     const supabase = getSupabaseClient()
     if (supabase) {
       await supabase.auth.signOut()
@@ -135,7 +195,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     setIsAuthenticated(false)
     setUser(null)
     setSession(null)
-    safeRedirect('/login')
+    safeRedirect("/login")
   }
 
   const value = {
@@ -143,7 +203,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     session,
     signOut,
     isLoading,
-    isAuthenticated
+    isAuthenticated,
   }
 
   return (
