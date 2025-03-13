@@ -11,16 +11,16 @@ type AuthProps = {
 }
 
 export function Auth({ view, redirectTo = "/dashboard" }: AuthProps) {
-  console.log('[Auth] Rendering auth component', { view, redirectTo })
+  console.log("[Auth] Rendering auth component", { view, redirectTo })
 
   // Get the Supabase client instance
   const supabase = getSupabaseClient()
 
   // Log when the component mounts
   useEffect(() => {
-    console.log('[Auth] Component mounted')
+    console.log("[Auth] Component mounted")
     return () => {
-      console.log('[Auth] Component unmounted')
+      console.log("[Auth] Component unmounted")
     }
   }, [])
 
@@ -28,12 +28,14 @@ export function Auth({ view, redirectTo = "/dashboard" }: AuthProps) {
   const callbackUrl = `${
     typeof window !== "undefined" ? window.location.origin : ""
   }/auth/callback?redirectedFrom=${encodeURIComponent(redirectTo)}`
-  
-  console.log('[Auth] Using callback URL:', callbackUrl)
+
+  console.log("[Auth] Using callback URL:", callbackUrl)
 
   // Don't render if there's no Supabase client (SSR) or redirectTo is not available
   if (!supabase) {
-    console.log('[Auth] No Supabase client available, not rendering auth component')
+    console.log(
+      "[Auth] No Supabase client available, not rendering auth component"
+    )
     return null
   }
 
@@ -45,7 +47,7 @@ export function Auth({ view, redirectTo = "/dashboard" }: AuthProps) {
         appearance={{ theme: ThemeSupa }}
         theme="light"
         showLinks={true}
-        providers={[]}
+        providers={["google"]}
         redirectTo={callbackUrl}
         onlyThirdPartyProviders={false}
       />
