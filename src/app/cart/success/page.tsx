@@ -2,11 +2,18 @@
 
 import { useSupabase } from "@/components/auth/SupabaseProvider"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useEffect } from "react"
 
 export default function OrderSuccessPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OrderSuccessContent />
+    </Suspense>
+  )
+}
+
+function OrderSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const orderId = searchParams.get("orderId") || "N/A"
