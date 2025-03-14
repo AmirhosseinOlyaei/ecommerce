@@ -4,6 +4,7 @@ import { type Product } from "@prisma/client"
 import Image from "next/image"
 import Link from "next/link"
 import { AddToCartButton } from "./AddToCartButton"
+import { useSupabase } from "@/components/auth/SupabaseProvider"
 
 interface ProductDetailProps {
   product: Omit<Product, "price"> & {
@@ -14,6 +15,8 @@ interface ProductDetailProps {
 }
 
 export function ProductDetail({ product }: ProductDetailProps) {
+  const { isAuthenticated } = useSupabase()
+  
   // Generate consistent seed based on product ID
   const productSeed = product.id
     ? parseInt(product.id.replace(/[^0-9]/g, "").slice(0, 3) || "1")
@@ -35,31 +38,57 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
   return (
     <div className="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
-      <nav className="flex mb-8 text-sm">
-        <ol className="flex items-center space-x-2">
-          <li>
+      <div className="flex justify-between items-center mb-6">
+        <nav className="flex text-sm">
+          <ol className="flex items-center space-x-2">
+            <li>
+              <Link
+                href="/"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                Home
+              </Link>
+            </li>
+            <li className="text-gray-400 dark:text-gray-500">/</li>
+            <li>
+              <Link
+                href="/products"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                Products
+              </Link>
+            </li>
+            <li className="text-gray-400 dark:text-gray-500">/</li>
+            <li className="font-medium text-gray-700 dark:text-gray-300">
+              {product.name}
+            </li>
+          </ol>
+        </nav>
+        
+        {/* Admin actions */}
+        {isAuthenticated && (
+          <div className="flex space-x-3">
             <Link
-              href="/"
-              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              href={`/dashboard/products/edit/${product.id}`}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700"
             >
-              Home
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit Product
             </Link>
-          </li>
-          <li className="text-gray-400 dark:text-gray-500">/</li>
-          <li>
             <Link
-              href="/products"
-              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              href="/dashboard/products"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700"
             >
-              Products
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              All Products
             </Link>
-          </li>
-          <li className="text-gray-400 dark:text-gray-500">/</li>
-          <li className="font-medium text-gray-700 dark:text-gray-300">
-            {product.name}
-          </li>
-        </ol>
-      </nav>
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
         {/* Product Image */}
