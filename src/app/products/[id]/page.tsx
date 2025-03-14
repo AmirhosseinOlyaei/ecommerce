@@ -9,7 +9,8 @@ interface ProductPageProps {
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const { id } = params
+  // Use await for params to address the warning about synchronous usage
+  const { id } = await Promise.resolve(params)
 
   try {
     // Fetch product details directly using Prisma instead of tRPC
@@ -21,7 +22,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
       notFound()
     }
 
-    return <ProductDetail product={product} />
+    // Convert Decimal to number to fix "Only plain objects can be passed to Client Components"
+    return (
+      <ProductDetail
+        product={{
+          ...product,
+          price:
+            typeof product.price === "object" && product.price !== null
+              ? Number(product.price.toString())
+              : Number(product.price),
+        }}
+      />
+    )
   } catch (error) {
     console.error("Error fetching product:", error)
     notFound()
