@@ -3,14 +3,31 @@
 import { useSupabase } from "@/components/auth/SupabaseProvider"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 export default function OrderSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const orderId = searchParams.get("orderId") || "N/A"
-  const total = searchParams.get("total") || "0.00"
+  const rawTotal = searchParams.get("total") || "0"
+  const [formattedTotal, setFormattedTotal] = useState("0.00")
   const { isAuthenticated } = useSupabase()
+
+  // Format the total correctly when component mounts or when rawTotal changes
+  useEffect(() => {
+    try {
+      // Parse the total and ensure it's a valid number
+      const numericTotal = parseFloat(rawTotal)
+      if (!isNaN(numericTotal)) {
+        setFormattedTotal(numericTotal.toFixed(2))
+      } else {
+        setFormattedTotal("0.00")
+      }
+    } catch (e) {
+      console.error("Error formatting total:", e)
+      setFormattedTotal("0.00")
+    }
+  }, [rawTotal])
 
   // If not authenticated, redirect to login
   useEffect(() => {
@@ -56,7 +73,7 @@ export default function OrderSuccessContent() {
           </div>
           <div className="flex justify-between my-2">
             <span className="font-medium">Total Amount:</span>
-            <span className="text-gray-600">${total}</span>
+            <span className="text-gray-600">${formattedTotal}</span>
           </div>
         </div>
 
@@ -70,18 +87,18 @@ export default function OrderSuccessContent() {
           </p>
         </div>
 
-        <div className="flex flex-col mt-6 space-y-3">
+        <div className="flex justify-between mt-6 space-x-3">
           <Link
-            href="/products"
-            className="px-4 py-2 text-center text-white bg-purple-600 rounded-md transition duration-200 hover:bg-purple-700"
+            href="/orders"
+            className="flex-1 px-4 py-2 text-center text-white bg-blue-600 rounded-md transition duration-200 hover:bg-blue-700"
           >
-            Continue Shopping
+            View My Orders
           </Link>
           <Link
-            href="/dashboard"
-            className="px-4 py-2 text-center text-gray-700 bg-white rounded-md border border-gray-300 transition duration-200 hover:bg-gray-50"
+            href="/products"
+            className="flex-1 px-4 py-2 text-center text-white bg-purple-600 rounded-md transition duration-200 hover:bg-purple-700"
           >
-            Go to Dashboard
+            Continue Shopping
           </Link>
         </div>
       </div>
