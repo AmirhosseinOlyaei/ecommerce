@@ -2,7 +2,7 @@
 
 import { api } from "@/lib/trpc/client"
 import { useRouter } from "next/navigation"
-import { useEffect, useState, useCallback } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 interface ProductFormProps {
   productId?: string
@@ -13,6 +13,7 @@ export function ProductForm({ productId }: ProductFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState("")
   const [isNavigating, setIsNavigating] = useState(false)
+  const [skuError, setSkuError] = useState("")
 
   // Form state
   const [formData, setFormData] = useState({
@@ -39,23 +40,38 @@ export function ProductForm({ productId }: ProductFormProps) {
   )
 
   // Fetch existing product data if editing
-  const { data: productData, isLoading: isLoadingProduct } =
-    api.product.getById.useQuery(
-      { id: productId || "" },
-      { enabled: !!productId }
-    )
+  const {
+    data: productData,
+    isLoading: isLoadingProduct,
+    error: productError,
+  } = api.product.getById.useQuery(
+    { id: productId || "" },
+    {
+      enabled: !!productId,
+      retry: 1,
+      onError: (error) => {
+        console.error("Error fetching product:", error)
+        setFormError(`Failed to load product: ${error.message}`)
+      },
+    }
+  )
 
   // Populate form with existing data when available
   useEffect(() => {
     if (productData && productId) {
-      setFormData({
-        name: productData.name,
-        price: productData.price.toFixed(2), // Convert Decimal to string using toFixed if necessary
-        description: productData.description || "",
-        sku: productData.sku || "",
-        inventory: productData.inventory.toString(),
-        isActive: productData.isActive,
-      })
+      try {
+        setFormData({
+          name: productData.name,
+          price: productData.price.toFixed(2), // Convert Decimal to string using toFixed if necessary
+          description: productData.description || "",
+          sku: productData.sku || "",
+          inventory: productData.inventory.toString(),
+          isActive: productData.isActive,
+        })
+      } catch (err) {
+        console.error("Error formatting product data:", err)
+        setFormError("Error processing product data")
+      }
     }
   }, [productData, productId])
 
@@ -65,7 +81,20 @@ export function ProductForm({ productId }: ProductFormProps) {
       handleNavigation("/dashboard/products")
     },
     onError: (error) => {
-      setFormError(error.message)
+      console.error("Create product error:", error)
+
+      // Handle specific unique constraint error for SKU
+      if (
+        error.message.includes(
+          "Unique constraint failed on the fields: (`sku`)"
+        )
+      ) {
+        setSkuError("This SKU already exists. Please use a different one.")
+        setFormError("Product could not be created: SKU already in use")
+      } else {
+        setFormError(`Failed to create product: ${error.message}`)
+      }
+
       setIsSubmitting(false)
     },
   })
@@ -75,40 +104,23 @@ export function ProductForm({ productId }: ProductFormProps) {
       handleNavigation("/dashboard/products")
     },
     onError: (error) => {
-      setFormError(error.message)
+      console.error("Update product error:", error)
+
+      // Handle specific unique constraint error for SKU
+      if (
+        error.message.includes(
+          "Unique constraint failed on the fields: (`sku`)"
+        )
+      ) {
+        setSkuError("This SKU already exists. Please use a different one.")
+        setFormError("Product could not be updated: SKU already in use")
+      } else {
+        setFormError(`Failed to update product: ${error.message}`)
+      }
+
       setIsSubmitting(false)
     },
   })
-
-  // Note: Create and update mutations are simulated because the product router
-  // has been temporarily simplified as part of the build error fixes
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    setFormError("")
-
-    try {
-      const productData = {
-        name: formData.name,
-        description: formData.description || "",
-        price: parseFloat(formData.price),
-        sku: formData.sku || "",
-        inventory: parseInt(formData.inventory, 10),
-        isActive: formData.isActive,
-      }
-
-      if (productId) {
-        updateProductMutation.mutate({ id: productId, data: productData })
-      } else {
-        createProductMutation.mutate(productData)
-      }
-    } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Unknown error occurred"
-      setFormError(errorMessage)
-      setIsSubmitting(false)
-    }
-  }
 
   // Handle form input changes
   const handleChange = (
@@ -118,11 +130,20 @@ export function ProductForm({ productId }: ProductFormProps) {
   ) => {
     const { name, value, type } = e.target
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
-    }))
+    // Clear SKU error when user edits the SKU field
+    if (name === "sku") {
+      setSkuError("")
+    }
+
+    try {
+      setFormData((prev) => ({
+        ...prev,
+        [name]:
+          type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+      }))
+    } catch (err) {
+      console.error("Error updating form data:", err)
+    }
   }
 
   // Handle checkbox changes
@@ -135,10 +156,77 @@ export function ProductForm({ productId }: ProductFormProps) {
     }))
   }
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setFormError("")
+    setSkuError("")
+
+    try {
+      // Validate input values before parsing
+      if (isNaN(parseFloat(formData.price))) {
+        throw new Error("Invalid price format")
+      }
+
+      if (isNaN(parseInt(formData.inventory, 10))) {
+        throw new Error("Invalid inventory format")
+      }
+
+      // If SKU is provided, ensure it follows proper format
+      if (formData.sku && formData.sku.trim() !== "") {
+        // You can add additional SKU validation rules here if needed
+        // For example, checking for alphanumeric format, specific length, etc.
+        if (formData.sku.length > 50) {
+          setSkuError("SKU must be 50 characters or less")
+          setIsSubmitting(false)
+          return
+        }
+      }
+
+      const productData = {
+        name: formData.name.trim(),
+        description: formData.description?.trim() || "",
+        price: parseFloat(formData.price),
+        sku: formData.sku?.trim() || "",
+        inventory: parseInt(formData.inventory, 10),
+        isActive: formData.isActive,
+      }
+
+      if (productId) {
+        updateProductMutation.mutate({ id: productId, data: productData })
+      } else {
+        createProductMutation.mutate(productData)
+      }
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred"
+      console.error("Form submission error:", err)
+      setFormError(errorMessage)
+      setIsSubmitting(false)
+    }
+  }
+
   if (productId && isLoadingProduct) {
     return (
       <div className="flex justify-center items-center p-12">
         <div className="w-12 h-12 rounded-full border-t-2 border-b-2 border-blue-500 animate-spin dark:border-blue-400"></div>
+      </div>
+    )
+  }
+
+  if (productError && productId) {
+    return (
+      <div className="p-6 bg-white rounded-lg shadow dark:bg-gray-800">
+        <div className="p-4 text-red-700 bg-red-50 rounded border border-red-200 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300">
+          <h3 className="text-lg font-medium">Error Loading Product</h3>
+          <p>{formError || "Failed to load product data. Please try again."}</p>
+          <button
+            onClick={() => handleNavigation("/dashboard/products")}
+            className="px-4 py-2 mt-4 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-800"
+          >
+            Return to Products
+          </button>
+        </div>
       </div>
     )
   }
@@ -198,8 +286,17 @@ export function ProductForm({ productId }: ProductFormProps) {
           id="sku"
           value={formData.sku}
           onChange={handleChange}
-          className="block px-3 py-2 mt-1 w-full text-gray-900 bg-white rounded-md border border-gray-300 shadow-sm dark:border-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:text-gray-100"
+          className={`block px-3 py-2 mt-1 w-full text-gray-900 bg-white rounded-md border ${
+            skuError
+              ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+              : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+          } shadow-sm dark:border-gray-700 focus:outline-none sm:text-sm dark:bg-gray-700 dark:text-gray-100`}
         />
+        {skuError && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {skuError}
+          </p>
+        )}
       </div>
 
       {/* Price and Inventory in a grid */}
