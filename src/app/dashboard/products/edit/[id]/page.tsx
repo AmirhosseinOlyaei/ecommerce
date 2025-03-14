@@ -7,11 +7,11 @@ import { EditProductClientPage } from "./client"
 export default async function EditProductPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
-  // Perform a minimal async operation to satisfy the type requirements
-  await Promise.resolve()
+  // Await the params promise
+  const resolvedParams = await params
 
   // Pass the ID to the client component
-  return <EditProductClientPage id={params.id} />
+  return <EditProductClientPage id={resolvedParams.id} />
 }
