@@ -23,7 +23,17 @@ export function BuyNowButton({ product }: BuyNowButtonProps) {
   const checkoutMutation = api.order.checkout.useMutation({
     onSuccess: (data) => {
       toast.success("Purchase successful!")
-      router.push(`/cart/success?orderId=${data.orderId}`)
+
+      // Format the total to ensure it's a valid number
+      const formattedTotal =
+        typeof data.total === "number" && !isNaN(data.total)
+          ? data.total.toFixed(2)
+          : "0.00"
+
+      // Redirect to success page with properly formatted total
+      router.push(
+        `/cart/success?orderId=${data.orderId}&total=${formattedTotal}`
+      )
     },
     onError: (error) => {
       setIsPurchasing(false)
@@ -40,6 +50,17 @@ export function BuyNowButton({ product }: BuyNowButtonProps) {
 
     if (isOutOfStock) {
       toast.error(`${product.name} is out of stock.`)
+      return
+    }
+
+    // Validate price
+    const validPrice =
+      typeof product.price === "number"
+        ? product.price
+        : parseFloat(product.price?.toString() || "0")
+
+    if (isNaN(validPrice) || validPrice <= 0) {
+      toast.error(`Invalid price for ${product.name}.`)
       return
     }
 
@@ -79,19 +100,20 @@ export function BuyNowButton({ product }: BuyNowButtonProps) {
       <Button
         onClick={handleBuyNow}
         disabled={isPurchasing || isOutOfStock}
-        variant="secondary"
-        className={`w-full py-3 ${
+        // Using the primary variant as base but overriding with high-contrast colors
+        variant="primary"
+        className={`w-full py-3 font-semibold text-lg ${
           isPurchasing
             ? "opacity-70 cursor-wait"
             : isOutOfStock
-            ? "text-gray-500 bg-gray-300 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400"
-            : "text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800"
+            ? "bg-gray-300 text-gray-600 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400 border-gray-400"
+            : "bg-green-600 text-white hover:bg-green-700 border-green-700 dark:bg-green-600 dark:hover:bg-green-700 dark:border-green-800 shadow-md hover:shadow-lg transition-all"
         }`}
       >
         {isPurchasing ? (
-          <span className="flex justify-center items-center">
+          <span className="flex items-center justify-center">
             <svg
-              className="mr-2 -ml-1 w-4 h-4 animate-spin"
+              className="w-5 h-5 mr-2 -ml-1 animate-spin"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -115,12 +137,28 @@ export function BuyNowButton({ product }: BuyNowButtonProps) {
         ) : isOutOfStock ? (
           "Out of Stock"
         ) : (
-          "Buy Now"
+          <span className="flex items-center justify-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+            Buy Now
+          </span>
         )}
       </Button>
 
       {/* Checkout process explanation */}
-      <div className="p-3 text-sm bg-gray-50 rounded-md border border-gray-200 dark:border-gray-700 dark:bg-gray-800/50">
+      <div className="p-3 text-sm border border-gray-200 rounded-md bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
         <h4 className="mb-2 font-medium text-gray-900 dark:text-gray-100">
           What happens next?
         </h4>
