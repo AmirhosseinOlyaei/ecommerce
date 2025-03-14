@@ -1,5 +1,14 @@
 module.exports = {
   images: {
-    domains: ['picsum.photos'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+      },
+      {
+        protocol: 'https',
+        hostname: 'source.unsplash.com',
+      }
+    ],
   },
 };
