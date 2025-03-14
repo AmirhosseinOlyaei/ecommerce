@@ -87,7 +87,7 @@ export function ProductList() {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
         <div className="text-center">
-          <div className="mx-auto w-12 h-12 rounded-full border-t-2 border-b-2 border-blue-500 animate-spin dark:border-blue-400"></div>
+          <div className="w-12 h-12 mx-auto border-t-2 border-b-2 border-blue-500 rounded-full animate-spin dark:border-blue-400"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-400">
             Loading products...
           </p>
@@ -100,7 +100,7 @@ export function ProductList() {
     // If unauthorized, show a friendlier message with login option
     if (error.message.includes("UNAUTHORIZED")) {
       return (
-        <div className="p-8 text-center bg-blue-50 rounded-lg dark:bg-blue-900/20">
+        <div className="p-8 text-center rounded-lg bg-blue-50 dark:bg-blue-900/20">
           <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">
             Sign in to view products
           </h3>
@@ -109,7 +109,7 @@ export function ProductList() {
           </p>
           <a
             href="/login?redirect=/products"
-            className="inline-flex justify-center items-center px-4 py-2 mt-4 text-sm font-medium text-white bg-blue-600 rounded-md transition-colors dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600"
+            className="inline-flex items-center justify-center px-4 py-2 mt-4 text-sm font-medium text-white transition-colors bg-blue-600 rounded-md dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600"
           >
             Sign In
           </a>
@@ -119,7 +119,7 @@ export function ProductList() {
 
     // For other errors, show the standard error message
     return (
-      <div className="p-8 text-center bg-red-50 rounded-lg dark:bg-red-900/20">
+      <div className="p-8 text-center rounded-lg bg-red-50 dark:bg-red-900/20">
         <h3 className="font-semibold text-red-600 dark:text-red-400">
           Error loading products
         </h3>
@@ -137,14 +137,14 @@ export function ProductList() {
   return (
     <div className="space-y-8">
       {/* Search bar */}
-      <div className="mx-auto max-w-md">
+      <div className="mx-auto">
         <form onSubmit={handleSearch} className="flex">
           <input
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search products..."
-            className="flex-1 px-4 py-2 text-gray-900 bg-white rounded-l-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+            className="flex-1 w-full px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-l-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
           />
           <button
             type="submit"
@@ -154,7 +154,7 @@ export function ProductList() {
           </button>
         </form>
         {isSearching && searchQuery && (
-          <div className="flex justify-between items-center mt-2 text-sm">
+          <div className="flex items-center justify-between mt-2 text-sm">
             <p className="text-gray-700 dark:text-gray-300">
               Search results for &quot;{searchQuery}&quot;
             </p>
@@ -170,7 +170,7 @@ export function ProductList() {
 
       {/* Category filter - temporarily disabled because the category router is not implemented */}
       {categories && categories.length > 0 && (
-        <div className="flex flex-wrap gap-2 justify-center">
+        <div className="flex flex-wrap justify-center gap-2">
           <button
             onClick={() => setSelectedCategory(undefined)}
             className={`px-3 py-1 rounded-full text-sm ${
