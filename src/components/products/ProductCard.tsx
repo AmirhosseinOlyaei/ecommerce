@@ -5,7 +5,8 @@ import Image from "next/image"
 import Link from "next/link"
 
 interface ProductCardProps {
-  product: Product & {
+  product: Omit<Product, "price"> & {
+    price: number | string | { toString(): string } // Allow different price types
     images?: { url: string }[]
     category?: { name: string } | null
   }
@@ -19,10 +20,17 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const defaultImageUrl = `https://picsum.photos/seed/${productSeed}/800/1000`
   const imageUrl = product.images?.[0]?.url || defaultImageUrl
+
+  // Handle different price types (Decimal, number, string)
+  const priceAsNumber =
+    typeof product.price === "number"
+      ? product.price
+      : parseFloat(product.price.toString())
+
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(Number(product.price))
+  }).format(priceAsNumber)
 
   return (
     <Link

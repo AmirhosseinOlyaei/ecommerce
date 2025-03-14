@@ -1,4 +1,5 @@
 import { SupabaseProvider } from "@/components/auth/SupabaseProvider"
+import { ToastProvider } from "@/components/ui/ToastProvider"
 import { CartProvider } from "@/context/CartContext"
 import { TRPCProvider } from "@/lib/trpc/Provider"
 import type { Metadata } from "next"
@@ -32,7 +33,10 @@ export default function RootLayout({
       >
         <SupabaseProvider>
           <TRPCProvider>
-            <CartProvider>{children}</CartProvider>
+            <CartProvider>
+              {children}
+              <ToastProvider />
+            </CartProvider>
           </TRPCProvider>
         </SupabaseProvider>
       </body>

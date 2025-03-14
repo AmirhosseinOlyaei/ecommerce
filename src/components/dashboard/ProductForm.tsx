@@ -183,12 +183,15 @@ export function ProductForm({ productId }: ProductFormProps) {
         }
       }
 
+      // Don't automatically activate - let user manually control through the activate button
+      const inventory = parseInt(formData.inventory, 10)
+
       const productData = {
         name: formData.name.trim(),
         description: formData.description?.trim() || "",
         price: parseFloat(formData.price),
         sku: formData.sku?.trim() || "",
-        inventory: parseInt(formData.inventory, 10),
+        inventory: inventory,
         isActive: formData.isActive,
       }
 

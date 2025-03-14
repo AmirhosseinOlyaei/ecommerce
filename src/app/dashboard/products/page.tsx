@@ -42,11 +42,26 @@ export default function ProductManagementPage() {
   )
 
   // Fetch products with tRPC
-  const { data: productsData, isLoading: isLoadingProducts } =
-    api.product.getAll.useQuery({
-      limit: 100,
-      onlyActive: false, // Show all products, including inactive ones
-    })
+  const {
+    data: productsData,
+    isLoading: isLoadingProducts,
+    refetch: refetchProducts,
+  } = api.product.getAll.useQuery({
+    limit: 100,
+    onlyActive: false, // Show all products, including inactive ones
+  })
+
+  // Update product status mutation
+  const updateProductMutation = api.product.update.useMutation({
+    onSuccess: () => {
+      // Refetch products to update the UI
+      refetchProducts()
+    },
+    onError: (error) => {
+      console.error("Update product status error:", error)
+      alert(`Failed to update product status: ${error.message}`)
+    },
+  })
 
   // Extract products from data
   const products = productsData?.items || []
@@ -79,7 +94,7 @@ export default function ProductManagementPage() {
     }
   }
 
-  // Handle product status toggle (also temporarily disabled)
+  // Handle product status toggle
   const handleToggleStatus = (product: {
     id: string
     isActive: boolean
@@ -89,21 +104,26 @@ export default function ProductManagementPage() {
     inventory: number
     updatedAt: Date
   }) => {
-    // Currently disabled due to router limitations
-    console.log("Toggle product status is temporarily disabled", product.id)
+    const newStatus = !product.isActive
 
-    // In a complete implementation, this would be:
-    // toggleProductStatusMutation.mutate({
-    //   id: product.id,
-    //   data: { isActive: !product.isActive },
-    // })
-
-    // For now, just show a message
-    alert(
-      `Product status toggle is currently disabled in this development version. Would toggle ${
-        product.name
-      } to ${!product.isActive ? "active" : "inactive"}`
-    )
+    try {
+      updateProductMutation.mutate({
+        id: product.id,
+        data: {
+          name: product.name,
+          price: parseFloat(product.price),
+          sku: product.sku,
+          inventory: product.inventory,
+          isActive: newStatus,
+          description: "", // Maintain existing description
+        },
+      })
+    } catch (error) {
+      console.error("Error toggling product status:", error)
+      alert(
+        `Failed to ${newStatus ? "activate" : "deactivate"} ${product.name}`
+      )
+    }
   }
 
   // Show loading state

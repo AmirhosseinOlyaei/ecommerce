@@ -1,6 +1,7 @@
 "use client"
 
 import { api } from "@/lib/trpc/client"
+import { type Product } from "@prisma/client"
 import { useState } from "react"
 import { ProductCard } from "./ProductCard"
 
@@ -10,6 +11,13 @@ interface Category {
   name: string
 }
 
+// Define custom Product type for our component
+interface ProductWithRelations extends Omit<Product, "price"> {
+  price: number | string | { toString(): string } // Handle both number, string and Decimal types
+  images?: { url: string }[]
+  category?: { name: string } | null
+}
+
 export function ProductList() {
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
     undefined
@@ -17,22 +25,49 @@ export function ProductList() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
 
-  // Using tRPC to fetch products
+  // Using tRPC to fetch products with error handling for unauthenticated users
   const {
     data: productsData,
     isLoading,
     error,
-  } = api.product.getAll.useQuery({
-    limit: 12,
-    categoryId: selectedCategory,
-    onlyActive: true,
-    search: searchQuery.length > 2 ? searchQuery : undefined,
-  })
+  } = api.product.getAll.useQuery(
+    {
+      limit: 12,
+      categoryId: selectedCategory,
+      onlyActive: true,
+      search: searchQuery.length > 2 ? searchQuery : undefined,
+    },
+    {
+      // Don't retry on unauthorized errors (when user isn't logged in)
+      retry: (failureCount, error) => {
+        if (error?.message?.includes("UNAUTHORIZED")) return false
+        return failureCount < 3 // Retry other errors up to 3 times
+      },
+      onError: (error) => {
+        console.error("Error fetching products:", error)
+      },
+    }
+  )
 
-  // Also fetch featured products
-  const { data: featuredProducts } = api.product.getFeatured.useQuery({
-    limit: 4,
-  })
+  // Featured products temporarily disabled
+  /* 
+  // Also fetch featured products with error handling
+  const { data: featuredProducts } = api.product.getFeatured.useQuery(
+    {
+      limit: 4,
+    },
+    {
+      // Don't retry on unauthorized errors (when user isn't logged in)
+      retry: (failureCount, error) => {
+        if (error?.message?.includes("UNAUTHORIZED")) return false
+        return failureCount < 3 // Retry other errors up to 3 times
+      },
+      onError: (error) => {
+        console.error("Error fetching featured products:", error)
+      },
+    }
+  )
+  */
 
   // Temporarily disabled until category router is implemented
   // const { data: categories } = api.category.getAll.useQuery()
@@ -62,6 +97,27 @@ export function ProductList() {
   }
 
   if (error) {
+    // If unauthorized, show a friendlier message with login option
+    if (error.message.includes("UNAUTHORIZED")) {
+      return (
+        <div className="p-8 text-center bg-blue-50 rounded-lg dark:bg-blue-900/20">
+          <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+            Sign in to view products
+          </h3>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Please sign in to browse our product catalog and make purchases.
+          </p>
+          <a
+            href="/login?redirect=/products"
+            className="inline-flex justify-center items-center px-4 py-2 mt-4 text-sm font-medium text-white bg-blue-600 rounded-md transition-colors dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600"
+          >
+            Sign In
+          </a>
+        </div>
+      )
+    }
+
+    // For other errors, show the standard error message
     return (
       <div className="p-8 text-center bg-red-50 rounded-lg dark:bg-red-900/20">
         <h3 className="font-semibold text-red-600 dark:text-red-400">
@@ -75,7 +131,8 @@ export function ProductList() {
   // Extract the actual products array from the data structure
   const products = productsData?.items || []
 
-  const featuredProductsList = featuredProducts || []
+  // Featured products temporarily disabled
+  // const featuredProductsList = featuredProducts || []
 
   return (
     <div className="space-y-8">
@@ -141,6 +198,7 @@ export function ProductList() {
       )}
 
       {/* Products grid */}
+      {/* Featured Products section temporarily removed
       {!isSearching &&
         featuredProductsList &&
         featuredProductsList.length > 0 && (
@@ -150,11 +208,15 @@ export function ProductList() {
             </h2>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
               {featuredProductsList.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product as ProductWithRelations}
+                />
               ))}
             </div>
           </div>
         )}
+      */}
 
       <div className="space-y-4">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
@@ -163,7 +225,10 @@ export function ProductList() {
         {products && products.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard
+                key={product.id}
+                product={product as ProductWithRelations}
+              />
             ))}
           </div>
         ) : (
