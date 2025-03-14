@@ -6,14 +6,22 @@ import Link from "next/link"
 import { AddToCartButton } from "./AddToCartButton"
 
 interface ProductDetailProps {
-  product: Product & {
+  product: Omit<Product, "price"> & {
+    price: number | { toNumber: () => number }
     images?: { url: string }[]
     category?: { name: string } | null
   }
 }
 
 export function ProductDetail({ product }: ProductDetailProps) {
-  const imageUrl = product.images?.[0]?.url || "https://picsum.photos/200/300"
+  // Generate consistent seed based on product ID
+  const productSeed = product.id
+    ? parseInt(product.id.replace(/[^0-9]/g, "").slice(0, 3) || "1")
+    : Math.floor(Math.random() * 1000)
+
+  const imageUrl =
+    product.images?.[0]?.url ||
+    `https://picsum.photos/seed/${productSeed}/800/1000`
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
