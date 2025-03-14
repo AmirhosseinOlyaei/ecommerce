@@ -1,5 +1,6 @@
 "use client"
 
+import { Button } from "@/components/ui/Button"
 import { CartItem, useCart } from "@/context/CartContext"
 import { useState } from "react"
 
@@ -36,11 +37,11 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
   }
 
   return (
-    <div className="flex flex-col sm:flex-row gap-2">
+    <div className="flex flex-col gap-2 sm:flex-row">
       <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded max-w-[120px] bg-white dark:bg-gray-800">
         <button
           type="button"
-          className="w-10 h-10 leading-10 text-gray-600 dark:text-gray-400 transition hover:opacity-75"
+          className="w-10 h-10 leading-10 text-gray-600 transition dark:text-gray-400 hover:opacity-75"
           onClick={() => quantity > 1 && setQuantity(quantity - 1)}
         >
           -
@@ -52,25 +53,25 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
 
         <button
           type="button"
-          className="w-10 h-10 leading-10 text-gray-600 dark:text-gray-400 transition hover:opacity-75"
+          className="w-10 h-10 leading-10 text-gray-600 transition dark:text-gray-400 hover:opacity-75"
           onClick={() => setQuantity(quantity + 1)}
         >
           +
         </button>
       </div>
 
-      <button
-        type="button"
+      <Button
         onClick={handleAddToCart}
         disabled={isAdded}
-        className={`flex-1 px-6 py-3 rounded text-sm font-medium transition ${
+        variant={isAdded ? "success" : "primary"}
+        className={`flex-1 ${
           isAdded
-            ? "bg-green-100 dark:bg-green-900 border-2 border-green-500 text-green-700 dark:text-green-300"
-            : "bg-black text-white dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+            ? "text-green-700 bg-green-100 border-2 border-green-500 dark:bg-green-900 dark:text-green-300"
+            : "text-white bg-black dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
         }`}
       >
         {isAdded ? "Added to Cart ✓" : "Add to Cart"}
-      </button>
+      </Button>
     </div>
   )
 }

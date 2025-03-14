@@ -1,6 +1,7 @@
 "use client"
 
 import { ProductsClientPage } from "@/components/products/ProductsClientPage"
+import { Button, HomeIcon, ListIcon } from "@/components/ui/Button"
 import { useRouter } from "next/navigation"
 
 export default function ProductsPage() {
@@ -14,18 +15,20 @@ export default function ProductsPage() {
             Products
           </h1>
           <div className="flex items-center space-x-4">
-            <button
+            <Button
               onClick={() => router.push("/dashboard")}
-              className="px-4 py-2 bg-gray-200 rounded-lg shadow-md transition dark-mode-bg-secondary hover:bg-gray-300 dark:hover:bg-gray-600"
+              variant="secondary"
+              icon={<ListIcon />}
             >
               Dashboard
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => router.push("/")}
-              className="px-4 py-2 text-white bg-blue-500 rounded-lg shadow-md transition dark-mode-bg-primary dark:hover:bg-blue-600 hover:bg-blue-600"
+              variant="primary"
+              icon={<HomeIcon />}
             >
               Home
-            </button>
+            </Button>
           </div>
         </div>
         <div className="p-6 mb-6 max-w-7xl bg-white rounded-lg shadow dark:bg-gray-800 dark:shadow-gray-700">

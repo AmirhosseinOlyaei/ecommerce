@@ -1,6 +1,7 @@
 "use client"
 
 import { useSupabase } from "@/components/auth/SupabaseProvider"
+import { Button, EditIcon, ListIcon } from "@/components/ui/Button"
 import { type Product } from "@prisma/client"
 import Image from "next/image"
 import Link from "next/link"
@@ -44,23 +45,21 @@ export function ProductDetail({ product }: ProductDetailProps) {
             Product Details
           </h1>
           <div className="flex items-center space-x-4">
-            <Link
-              href="/products"
-              className="px-4 py-2 bg-gray-200 rounded-lg shadow-md transition dark-mode-bg-secondary hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200"
-            >
+            <Button href="/products" variant="secondary" icon={<ListIcon />}>
               All Products
-            </Link>
+            </Button>
             {isAuthenticated && (
-              <Link
+              <Button
                 href={`/dashboard/products/edit/${product.id}`}
-                className="px-4 py-2 text-white bg-blue-500 rounded-lg shadow-md transition dark-mode-bg-primary dark:hover:bg-blue-600 hover:bg-blue-600"
+                variant="primary"
+                icon={<EditIcon />}
               >
                 Edit Product
-              </Link>
+              </Button>
             )}
           </div>
         </div>
-        
+
         <div className="p-6 mb-6 bg-white rounded-lg shadow dark:bg-gray-800 dark:shadow-gray-700">
           {/* Breadcrumb navigation */}
           <nav className="flex mb-6 text-sm">

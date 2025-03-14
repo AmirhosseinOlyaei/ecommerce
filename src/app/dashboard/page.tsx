@@ -1,6 +1,7 @@
 "use client"
 
 import { useSupabase } from "@/components/auth/SupabaseProvider"
+import { Button, ListIcon, TrashIcon } from "@/components/ui/Button"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 
@@ -78,21 +79,23 @@ export default function DashboardPage() {
           Dashboard
         </h1>
         <div className="flex items-center space-x-4">
-          <button
+          <Button
             onClick={() => router.push("/products")}
-            className="px-4 py-2 text-white bg-blue-500 rounded-lg shadow-md transition dark-mode-bg-primary dark:hover:bg-blue-600 hover:bg-blue-600"
+            variant="primary"
+            icon={<ListIcon />}
           >
             View Store Front
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => {
               console.log("[Dashboard] Sign out button clicked")
               signOut()
             }}
-            className="px-4 py-2 text-white bg-red-600 rounded transition dark:bg-red-700 dark:hover:bg-red-600 hover:bg-red-700"
+            variant="danger"
+            icon={<TrashIcon />}
           >
             Sign Out
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -150,12 +153,13 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="mt-4">
-              <button
+              <Button
                 onClick={() => handleNavigation("/dashboard/products")}
-                className="flex justify-center px-4 py-2 w-full text-sm font-medium text-white bg-blue-600 rounded-md border border-transparent shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600"
+                variant="primary"
+                className="w-full"
               >
                 View Products
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -189,12 +193,13 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="mt-4">
-              <button
+              <Button
                 onClick={() => handleNavigation("/orders")}
-                className="flex justify-center px-4 py-2 w-full text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-indigo-700 dark:hover:bg-indigo-600"
+                variant="primary"
+                className="w-full"
               >
                 View Orders
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -228,12 +233,13 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="mt-4">
-              <button
+              <Button
                 onClick={() => handleNavigation("/dashboard/settings")}
-                className="flex justify-center px-4 py-2 w-full text-sm font-medium text-white bg-purple-600 rounded-md border border-transparent shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 dark:bg-purple-700 dark:hover:bg-purple-600"
+                variant="primary"
+                className="w-full"
               >
                 View Settings
-              </button>
+              </Button>
             </div>
           </div>
         </div>
