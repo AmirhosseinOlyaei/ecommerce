@@ -134,9 +134,9 @@ export const productRouter = createTRPCRouter({
   create: protectedProcedure
     .input(z.object({
       name: z.string().min(1),
-      description: z.string().optional(),
+      description: z.string().min(1),
       price: z.number().min(0),
-      sku: z.string().optional(),
+      sku: z.string().min(1),
       inventory: z.number().min(0),
       isActive: z.boolean(),
     }))
