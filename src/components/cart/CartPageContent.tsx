@@ -27,9 +27,15 @@ export function CartPageContent() {
       // Show success toast
       toast.success("Purchase successful! Your order has been placed.")
 
-      // Redirect to success page with total amount
+      // Format the total to ensure it's a valid number
+      const formattedTotal =
+        typeof data.total === "number" && !isNaN(data.total)
+          ? data.total.toFixed(2)
+          : "0.00"
+
+      // Redirect to success page with properly formatted total amount
       router.push(
-        `/cart/success?orderId=${data.orderId}&total=${data.total.toFixed(2)}`
+        `/cart/success?orderId=${data.orderId}&total=${formattedTotal}`
       )
     },
     onError: (error) => {
@@ -69,6 +75,22 @@ export function CartPageContent() {
       return
     }
 
+    // Validate cart items and prices
+    if (items.length === 0) {
+      toast.error("Your cart is empty")
+      return
+    }
+
+    // Check for any invalid prices
+    const hasInvalidPrices = items.some(
+      (item) => isNaN(Number(item.price)) || Number(item.price) <= 0
+    )
+
+    if (hasInvalidPrices) {
+      toast.error("There are items with invalid prices in your cart")
+      return
+    }
+
     setIsCheckingOut(true)
 
     try {
@@ -78,11 +100,29 @@ export function CartPageContent() {
         quantity: item.quantity,
       }))
 
+      // Store the current subtotal for verification
+      const currentSubtotal = subtotal
+
       // Call the checkout mutation
-      checkoutMutation.mutate({
-        items: checkoutItems,
-        shippingAddress: shippingAddress || undefined,
-      })
+      checkoutMutation.mutate(
+        {
+          items: checkoutItems,
+          shippingAddress: shippingAddress || undefined,
+        },
+        {
+          onSuccess: (data) => {
+            // Compare the returned total with our calculated subtotal
+            if (Math.abs(data.total - currentSubtotal) > 0.01) {
+              console.warn(
+                "Price discrepancy detected:",
+                `Cart subtotal: ${currentSubtotal.toFixed(2)}, Server total: ${
+                  data.total
+                }`
+              )
+            }
+          },
+        }
+      )
     } catch (error) {
       console.error("Checkout error:", error)
       setIsCheckingOut(false)
@@ -103,7 +143,7 @@ export function CartPageContent() {
           </p>
           <Link
             href="/products"
-            className="inline-block px-6 py-3 font-medium text-white bg-purple-600 rounded-md transition hover:bg-purple-700"
+            className="inline-block px-6 py-3 font-medium text-white transition bg-purple-600 rounded-md hover:bg-purple-700"
           >
             Browse Products
           </Link>
@@ -122,7 +162,7 @@ export function CartPageContent() {
           {items.map((item) => (
             <div
               key={item.productId}
-              className="flex overflow-hidden bg-white rounded-lg border"
+              className="flex overflow-hidden bg-white border rounded-lg"
             >
               {/* Product Image */}
               <div className="relative flex-shrink-0 w-24 h-24 bg-gray-100 sm:w-32 sm:h-32">
@@ -135,7 +175,7 @@ export function CartPageContent() {
                     className="object-cover"
                   />
                 ) : (
-                  <div className="flex justify-center items-center w-full h-full bg-gray-200">
+                  <div className="flex items-center justify-center w-full h-full bg-gray-200">
                     <span className="text-gray-400">No image</span>
                   </div>
                 )}
@@ -161,8 +201,8 @@ export function CartPageContent() {
                   ${item.price.toFixed(2)} each
                 </p>
 
-                <div className="flex justify-between items-center pt-2 mt-auto">
-                  <div className="flex items-center rounded border">
+                <div className="flex items-center justify-between pt-2 mt-auto">
+                  <div className="flex items-center border rounded">
                     <button
                       onClick={() =>
                         updateQuantity(item.productId, item.quantity - 1)
@@ -198,7 +238,7 @@ export function CartPageContent() {
 
         {/* Order Summary - Takes up 1/3 of the width on large screens */}
         <div className="lg:col-span-1">
-          <div className="p-6 bg-white rounded-lg border shadow-sm">
+          <div className="p-6 bg-white border rounded-lg shadow-sm">
             <h2 className="mb-4 text-lg font-medium text-gray-900">
               Order Summary
             </h2>
@@ -238,7 +278,7 @@ export function CartPageContent() {
                   id="showAddressInput"
                   checked={showAddressInput}
                   onChange={() => setShowAddressInput(!showAddressInput)}
-                  className="w-4 h-4 text-purple-600 rounded border-gray-300"
+                  className="w-4 h-4 text-purple-600 border-gray-300 rounded"
                 />
                 <label
                   htmlFor="showAddressInput"
@@ -272,22 +312,22 @@ export function CartPageContent() {
             <button
               onClick={handleCheckout}
               disabled={isCheckingOut || items.length === 0}
-              className="px-4 py-2 w-full text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:bg-purple-300"
+              className="w-full px-4 py-2 text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:bg-purple-300"
             >
               {isCheckingOut ? "Processing..." : "Proceed to Checkout"}
             </button>
 
             {/* Navigation buttons */}
-            <div className="flex gap-2 justify-between mt-4">
+            <div className="flex justify-between gap-2 mt-4">
               <Link
                 href="/products"
-                className="flex-1 px-4 py-2 text-sm text-center text-purple-600 bg-white rounded-md border border-purple-600 hover:bg-purple-50"
+                className="flex-1 px-4 py-2 text-sm text-center text-purple-600 bg-white border border-purple-600 rounded-md hover:bg-purple-50"
               >
                 Continue Shopping
               </Link>
               <Link
                 href="/orders"
-                className="flex-1 px-4 py-2 text-sm text-center text-gray-600 bg-white rounded-md border border-gray-300 hover:bg-gray-50"
+                className="flex-1 px-4 py-2 text-sm text-center text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 My Orders
               </Link>
@@ -295,7 +335,7 @@ export function CartPageContent() {
 
             {/* Authentication prompt for unauthenticated users */}
             {!checkoutMutation.isLoading && (
-              <div className="p-3 mt-4 text-sm bg-blue-50 rounded-md">
+              <div className="p-3 mt-4 text-sm rounded-md bg-blue-50">
                 <p className="mb-2 font-medium text-blue-800">
                   {isAuthenticated
                     ? "You're signed in and ready to checkout!"
@@ -304,7 +344,7 @@ export function CartPageContent() {
                 {!isAuthenticated && (
                   <Link
                     href={`/login?redirect=${encodeURIComponent("/cart")}`}
-                    className="block px-3 py-2 w-full text-sm text-center text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                    className="block w-full px-3 py-2 text-sm text-center text-white bg-blue-600 rounded-md hover:bg-blue-700"
                   >
                     Sign In
                   </Link>
