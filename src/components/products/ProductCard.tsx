@@ -1,8 +1,8 @@
 "use client"
 
+import { type Product } from "@prisma/client"
 import Image from "next/image"
 import Link from "next/link"
-import { type Product } from "@prisma/client"
 
 interface ProductCardProps {
   product: Product & {
@@ -12,7 +12,12 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const defaultImageUrl = "https://picsum.photos/200/300"
+  // Generate consistent seed based on product ID
+  const productSeed = product.id
+    ? parseInt(product.id.replace(/[^0-9]/g, "").slice(0, 3) || "1")
+    : Math.floor(Math.random() * 1000)
+
+  const defaultImageUrl = `https://picsum.photos/seed/${productSeed}/800/1000`
   const imageUrl = product.images?.[0]?.url || defaultImageUrl
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
