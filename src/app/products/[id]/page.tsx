@@ -13,7 +13,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params
 
   try {
-    // Fetch product details directly using Prisma instead of tRPC
+    // Fetch product directly using Prisma but format data like the tRPC router
     const product = await prisma.product.findUnique({
       where: { id },
     })
@@ -22,15 +22,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
       notFound()
     }
 
-    // Convert Decimal to number to fix "Only plain objects can be passed to Client Components"
+    // Format the product data exactly like the tRPC router does in getById
     return (
       <ProductDetail
         product={{
           ...product,
-          price:
-            typeof product.price === "object" && product.price !== null
-              ? Number(product.price.toString())
-              : Number(product.price),
+          // Convert Decimal to number consistent with how tRPC does it
+          price: product.price.toNumber(),
         }}
       />
     )
