@@ -3,14 +3,14 @@ import { prisma } from "@/server/db"
 import { notFound } from "next/navigation"
 
 interface ProductPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  // Use await for params to address the warning about synchronous usage
-  const { id } = await Promise.resolve(params)
+  // Await the params promise
+  const { id } = await params
 
   try {
     // Fetch product details directly using Prisma instead of tRPC
