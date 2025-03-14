@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, OrderStatus } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -10,7 +10,7 @@ export const orderRouter = createTRPCRouter({
       z.object({
         limit: z.number().min(1).max(100).optional().default(10),
         cursor: z.string().optional(),
-        status: z.string().optional(),
+        status: z.nativeEnum(OrderStatus).optional(),
       }).optional()
     )
     .query(async ({ ctx, input }) => {
@@ -28,21 +28,27 @@ export const orderRouter = createTRPCRouter({
         const limit = input?.limit ?? 10;
         const { status } = input || {}; // Removed cursor as it's not used currently
         
-        // For MVP - Generate fake order history if no real orders exist
-        // In production, this would query the actual Order table
-        
-        // First try to get real orders if the Order table exists
+        // Try to get real orders if the Order table exists
         try {
           // Construct the where clause
-          const where: { userId: string; status?: string } = { userId };
+          const where: Prisma.OrderWhereInput = { userId };
           if (status) {
-            where.status = status;
+            where.status = status as OrderStatus;
           }
           
-          // Use $queryRaw for now since the Order model might not be fully set up
-          const orders = await ctx.prisma.$queryRaw`
-            SELECT * FROM "Order" WHERE "userId" = ${userId} LIMIT ${limit + 1}
-          `;
+          // Use Prisma's type-safe query API
+          const orders = await ctx.prisma.order.findMany({
+            where,
+            take: limit + 1,
+            orderBy: { createdAt: 'desc' },
+            include: {
+              items: {
+                include: {
+                  product: true
+                }
+              }
+            }
+          });
           
           // If we have orders, format and return them
           if (Array.isArray(orders) && orders.length > 0) {
@@ -56,38 +62,14 @@ export const orderRouter = createTRPCRouter({
             };
           }
         } catch (e) {
-          // Table might not exist yet, continue to fallback
+          // Table might not exist yet, log the error and return empty orders
           console.log("Order table query failed:", e);
         }
         
-        // Fallback to generating mock order history
-        // This provides a better user experience than an empty list while in development
-        const sampleOrderCount = 3;
-        const mockOrders = Array.from({ length: sampleOrderCount }).map((_, i) => {
-          const orderId = `order-${userId.substring(0, 5)}-${Date.now() - (i * 86400000)}-${Math.floor(Math.random() * 1000)}`;
-          return {
-            id: orderId,
-            createdAt: new Date(Date.now() - (i * 86400000)), // Orders from recent days
-            updatedAt: new Date(Date.now() - (i * 86400000)),
-            userId: userId,
-            total: new Prisma.Decimal(Math.floor(Math.random() * 500) + 50), // Random total between $50-$550
-            status: i === 0 ? "DELIVERED" : i === 1 ? "SHIPPED" : "PENDING",
-            paymentStatus: "PAID",
-            shippingAddress: "123 Main St, Anytown, USA",
-            orderItems: Array.from({ length: Math.floor(Math.random() * 3) + 1 }).map((_, j) => ({
-              id: `item-${orderId}-${j}`,
-              orderId: orderId,
-              productId: `product-${j}`,
-              name: `Sample Product ${j+1}`,
-              quantity: Math.floor(Math.random() * 3) + 1,
-              price: new Prisma.Decimal(Math.floor(Math.random() * 100) + 20),
-            })),
-          };
-        });
-        
+        // No mock order generation - return empty array
         return {
-          items: mockOrders,
-          nextCursor: undefined, // No pagination for mock data
+          items: [],
+          nextCursor: undefined,
         };
       } catch (error) {
         console.error("Failed to fetch orders:", error);
@@ -159,106 +141,146 @@ export const orderRouter = createTRPCRouter({
         });
       }
 
-      try {
-        const userId = ctx.session.user.id;
-        
-        // Validate all products exist and have sufficient inventory
-        const productIds = input.items.map(item => item.productId);
-        const products = await ctx.prisma.product.findMany({
-          where: {
-            id: {
-              in: productIds,
+      // Start a transaction to ensure all operations are atomic
+      return await ctx.prisma.$transaction(async (tx) => {
+        try {
+          // We already checked that ctx.session?.user exists above, so we can safely use it here
+          const userId = ctx.session!.user.id;
+          
+          // Validate all products exist and have sufficient inventory
+          const productIds = input.items.map(item => item.productId);
+          const products = await tx.product.findMany({
+            where: {
+              id: {
+                in: productIds,
+              },
             },
-          },
-        });
+          });
 
-        if (products.length !== productIds.length) {
+          if (products.length !== productIds.length) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "One or more products not found",
+            });
+          }
+
+          // Check inventory and calculate total
+          let total = 0;
+          type InventoryUpdate = { 
+            id: string; 
+            inventory: number; 
+            shouldDeactivate: boolean;
+          };
+          
+          type OrderItemCreate = { 
+            productId: string; 
+            quantity: number; 
+            price: Prisma.Decimal;
+            name: string; 
+          };
+          
+          const inventoryUpdates: InventoryUpdate[] = [];
+          const orderItems: OrderItemCreate[] = [];
+
+          for (const item of input.items) {
+            const product = products.find(p => p.id === item.productId);
+            if (!product) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: `Product ${item.productId} not found`,
+              });
+            }
+
+            if (product.inventory < item.quantity) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: `Insufficient inventory for ${product.name}`,
+              });
+            }
+
+            // Calculate item total - ensure we have a valid price
+            const itemPrice = Number(product.price);
+            if (isNaN(itemPrice) || itemPrice <= 0) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: `Invalid price for product ${product.name}`,
+              });
+            }
+
+            const itemTotal = itemPrice * item.quantity;
+            total += itemTotal;
+
+            // Calculate new inventory
+            const newInventory = product.inventory - item.quantity;
+            
+            // Add to inventory updates, flagging for deactivation if inventory is now zero
+            inventoryUpdates.push({
+              id: product.id,
+              inventory: newInventory,
+              shouldDeactivate: newInventory === 0
+            });
+
+            // Prepare order item with exact price from product
+            orderItems.push({
+              productId: product.id,
+              quantity: item.quantity,
+              price: product.price, // Use the actual Decimal from the product
+              name: product.name,
+            });
+          }
+
+          // Update inventory and deactivate products with zero inventory
+          for (const update of inventoryUpdates) {
+            await tx.product.update({
+              where: { id: update.id },
+              data: { 
+                inventory: update.inventory,
+                // Automatically deactivate products when inventory hits zero
+                ...(update.shouldDeactivate && { isActive: false })
+              },
+            });
+          }
+
+          // Generate a unique order ID for this MVP implementation
+          // Include part of the userId for basic user association
+          const orderId = `order-${userId.substring(0, 5)}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+          // Create the order using Prisma's type-safe API
+          const order = await tx.order.create({
+            data: {
+              id: orderId,
+              userId,
+              status: 'PENDING',
+              total: new Prisma.Decimal(total),
+              shippingAddress: input.shippingAddress || '',
+              paymentStatus: 'PAID',
+              items: {
+                create: orderItems.map(item => ({
+                  id: `item-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+                  ...item
+                }))
+              }
+            },
+            include: {
+              items: true
+            }
+          });
+
+          return {
+            success: true,
+            orderId: order.id
+          };
+        } catch (error) {
+          // This will roll back all database changes if any error occurs
+          console.error("Checkout failed:", error);
+          if (error instanceof TRPCError) {
+            throw error;
+          }
           throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "One or more products not found",
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Checkout failed",
           });
         }
-
-        // Check inventory and calculate total
-        let total = 0;
-        type InventoryUpdate = { id: string; inventory: number };
-        type OrderItemCreate = { 
-          productId: string; 
-          quantity: number; 
-          price: Prisma.Decimal;
-          name: string; 
-        };
-        
-        const inventoryUpdates: InventoryUpdate[] = [];
-        const orderItems: OrderItemCreate[] = [];
-
-        for (const item of input.items) {
-          const product = products.find(p => p.id === item.productId);
-          if (!product) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: `Product ${item.productId} not found`,
-            });
-          }
-
-          if (product.inventory < item.quantity) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: `Insufficient inventory for ${product.name}`,
-            });
-          }
-
-          // Calculate item total
-          const itemPrice = Number(product.price);
-          const itemTotal = itemPrice * item.quantity;
-          total += itemTotal;
-
-          // Prepare inventory update
-          inventoryUpdates.push({
-            id: product.id,
-            inventory: product.inventory - item.quantity,
-          });
-
-          // Prepare order item
-          orderItems.push({
-            productId: product.id,
-            quantity: item.quantity,
-            price: new Prisma.Decimal(itemPrice),
-            name: product.name,
-          });
-        }
-
-        // Update inventory first
-        for (const update of inventoryUpdates) {
-          await ctx.prisma.product.update({
-            where: { id: update.id },
-            data: { 
-              inventory: update.inventory,
-            },
-          });
-        }
-
-        // Generate a unique order ID for this MVP implementation
-        // Include part of the userId for basic user association
-        const orderId = `order-${userId.substring(0, 5)}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-
-        // For a proper implementation, we would create an order in the database
-        // But for MVP, we'll return success with the generated order ID
-        return {
-          success: true,
-          orderId: orderId,
-          message: "Purchase successful! Products have been removed from inventory.",
-          total: total
-        };
-      } catch (error) {
-        console.error("Checkout failed:", error);
-        if (error instanceof TRPCError) {
-          throw error;
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Checkout failed",
-        });
-      }
+      }); // End of transaction
     }),
 });
