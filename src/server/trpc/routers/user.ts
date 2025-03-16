@@ -8,43 +8,17 @@ import { z } from "zod";
 export const userRouter = createTRPCRouter({
   // Get current user profile
   me: protectedProcedure.query(async ({ ctx }) => {
-    // Simplified version that only includes fields known to exist in the User model
-    let user = await ctx.prisma.user.findUnique({
-      where: { id: ctx.session.user.id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        role: true,
-        // createdAt removed to fix build error
-      },
-    });
-
-    // If user doesn't exist in our database, create it from Supabase data
-    if (!user) {
-      // Get Supabase user data
-      const supabaseUser = ctx.session.user;
-      
-      // Create user in our database
-      user = await ctx.prisma.user.create({
-        data: {
-          id: supabaseUser.id,
-          email: supabaseUser.email || "",
-          name: supabaseUser.user_metadata?.full_name || "User",
-          image: supabaseUser.user_metadata?.avatar_url || null,
-          role: (supabaseUser.user_metadata?.role?.toUpperCase() as "ADMIN" | "STAFF" | "CUSTOMER") || "CUSTOMER",
-        },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
-          role: true,
-          // createdAt removed to fix build error
-        },
-      });
-    }
+    // Since the User model doesn't exist yet, return mocked user data from session
+    const supabaseUser = ctx.session.user;
+    
+    // Create a mock user object
+    const user = {
+      id: supabaseUser.id,
+      email: supabaseUser.email || "",
+      name: supabaseUser.user_metadata?.full_name || "User",
+      image: supabaseUser.user_metadata?.avatar_url || null,
+      role: (supabaseUser.user_metadata?.role?.toUpperCase() as "ADMIN" | "STAFF" | "CUSTOMER") || "CUSTOMER",
+    };
 
     return user;
   }),
