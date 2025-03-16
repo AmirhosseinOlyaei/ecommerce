@@ -27,13 +27,10 @@ export function CartPageContent() {
       // Show success toast
       toast.success("Purchase successful! Your order has been placed.")
 
-      // Format the total to ensure it's a valid number
-      const formattedTotal =
-        typeof data.total === "number" && !isNaN(data.total)
-          ? data.total.toFixed(2)
-          : "0.00"
+      // Redirect to success page with the subtotal from the cart
+      // since the API doesn't return total anymore
+      const formattedTotal = subtotal.toFixed(2)
 
-      // Redirect to success page with properly formatted total amount
       router.push(
         `/cart/success?orderId=${data.orderId}&total=${formattedTotal}`
       )
@@ -100,29 +97,11 @@ export function CartPageContent() {
         quantity: item.quantity,
       }))
 
-      // Store the current subtotal for verification
-      const currentSubtotal = subtotal
-
       // Call the checkout mutation
-      checkoutMutation.mutate(
-        {
-          items: checkoutItems,
-          shippingAddress: shippingAddress || undefined,
-        },
-        {
-          onSuccess: (data) => {
-            // Compare the returned total with our calculated subtotal
-            if (Math.abs(data.total - currentSubtotal) > 0.01) {
-              console.warn(
-                "Price discrepancy detected:",
-                `Cart subtotal: ${currentSubtotal.toFixed(2)}, Server total: ${
-                  data.total
-                }`
-              )
-            }
-          },
-        }
-      )
+      checkoutMutation.mutate({
+        items: checkoutItems,
+        shippingAddress: shippingAddress || undefined,
+      })
     } catch (error) {
       console.error("Checkout error:", error)
       setIsCheckingOut(false)
