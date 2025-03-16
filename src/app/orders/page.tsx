@@ -26,6 +26,41 @@ type Order = {
   orderItems: OrderItem[]
 }
 
+// Define a Decimal type to match Prisma's Decimal
+type Decimal = {
+  toNumber: () => number
+}
+
+// Add a type for API-returned orders which have 'items' instead of 'orderItems'
+type ApiOrder = {
+  id: string
+  createdAt: string | Date
+  updatedAt?: string | Date | null
+  userId: string
+  total: number | string | Decimal
+  status: string
+  paymentStatus?: string | null
+  shippingAddress?: string | null
+  items: Array<{
+    id: string
+    quantity: number
+    price: number | string | Decimal
+    name?: string
+    product: {
+      name: string
+      id: string
+      description: string | null
+      price: number | string | Decimal
+      image: string | null
+      sku: string
+      inventory: number
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }
+  }>
+}
+
 // Order status badge component
 const OrderStatusBadge = ({ status }: { status: string }) => {
   const getStatusColors = () => {
@@ -55,7 +90,31 @@ const OrderStatusBadge = ({ status }: { status: string }) => {
 }
 
 // Component to render a single order
-const OrderCard = ({ order }: { order: Order }) => {
+const OrderCard = ({ order }: { order: Order | ApiOrder }) => {
+  // Check if we're dealing with an ApiOrder (has items) or a regular Order (has orderItems)
+  const orderItems =
+    "items" in order
+      ? order.items.map((item) => ({
+          id: item.id,
+          name: item.name || item.product.name,
+          price:
+            typeof item.price === "object" && "toNumber" in item.price
+              ? item.price.toNumber()
+              : item.price ||
+                (typeof item.product.price === "object" &&
+                "toNumber" in item.product.price
+                  ? item.product.price.toNumber()
+                  : item.product.price),
+          quantity: item.quantity,
+        }))
+      : order.orderItems
+
+  // Handle total which might be a Decimal object
+  const totalAmount =
+    typeof order.total === "object" && "toNumber" in order.total
+      ? order.total.toNumber()
+      : Number(order.total)
+
   return (
     <div
       key={order.id}
@@ -77,7 +136,7 @@ const OrderCard = ({ order }: { order: Order }) => {
 
       <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
         <div className="space-y-3">
-          {order.orderItems?.map(
+          {orderItems?.map(
             (item: {
               id: string
               name: string
@@ -109,7 +168,7 @@ const OrderCard = ({ order }: { order: Order }) => {
           Total
         </span>
         <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-          ${Number(order.total).toFixed(2)}
+          ${totalAmount.toFixed(2)}
         </span>
       </div>
     </div>
