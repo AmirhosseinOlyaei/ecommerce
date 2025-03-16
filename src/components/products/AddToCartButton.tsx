@@ -1,10 +1,10 @@
-"use client"
+'use client'
 
-import { Button } from "@/components/ui/Button"
-import { useCart } from "@/context/CartContext"
-import { api } from "@/lib/trpc/client"
-import { useEffect, useState } from "react"
-import { toast } from "sonner"
+import { Button } from '@/components/ui/Button'
+import { useCart } from '@/context/CartContext'
+import { api } from '@/lib/trpc/client'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 type AddToCartButtonProps = {
   product: {
@@ -20,7 +20,7 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
   const [quantity, setQuantity] = useState(1)
   const [isAdding, setIsAdding] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
-  const isInCart = items.some((item) => item.productId === product.id)
+  const isInCart = items.some(item => item.productId === product.id)
 
   // Query to get the latest product inventory
   const { data: currentProduct } = api.product.getById.useQuery(
@@ -62,13 +62,13 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
 
     // Create a normalized price
     let validPrice: number
-    if (typeof product.price === "number") {
+    if (typeof product.price === 'number') {
       validPrice = product.price
     } else if (
-      typeof product.price === "object" &&
+      typeof product.price === 'object' &&
       product.price !== null &&
-      "toNumber" in product.price &&
-      typeof product.price.toNumber === "function"
+      'toNumber' in product.price &&
+      typeof product.price.toNumber === 'function'
     ) {
       validPrice = product.price.toNumber()
     } else {
@@ -92,31 +92,31 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
       setShowSuccess(true)
       toast.success(`${product.name} added to cart!`)
     } catch (error) {
-      toast.error("Failed to add product to cart")
-      console.error("Add to cart error:", error)
+      toast.error('Failed to add product to cart')
+      console.error('Add to cart error:', error)
     } finally {
       setIsAdding(false)
     }
   }
 
   return (
-    <div className="flex flex-col">
-      <div className="flex mb-4 space-x-2">
-        <div className="relative flex flex-row border rounded-md w-28">
+    <div className='flex flex-col'>
+      <div className='mb-4 flex space-x-2'>
+        <div className='relative flex w-28 flex-row rounded-md border'>
           <button
-            type="button"
-            className="flex items-center justify-center w-8 text-gray-900 bg-gray-100 rounded-l-md dark:bg-gray-700 dark:text-gray-300"
+            type='button'
+            className='flex w-8 items-center justify-center rounded-l-md bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-300'
             onClick={() => setQuantity(Math.max(1, quantity - 1))}
             disabled={isAdding}
           >
             -
           </button>
-          <span className="flex items-center justify-center w-12 text-sm font-medium text-gray-900 dark:text-gray-300">
+          <span className='flex w-12 items-center justify-center text-sm font-medium text-gray-900 dark:text-gray-300'>
             {quantity}
           </span>
           <button
-            type="button"
-            className="flex items-center justify-center w-8 text-gray-900 bg-gray-100 rounded-r-md dark:bg-gray-700 dark:text-gray-300"
+            type='button'
+            className='flex w-8 items-center justify-center rounded-r-md bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-300'
             onClick={() => {
               // Check inventory limits when increasing quantity
               const inventoryToCheck =
@@ -145,46 +145,46 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
           (currentProduct?.inventory !== undefined &&
             currentProduct.inventory <= 0)
         }
-        className="w-full font-medium text-base py-2.5 bg-blue-600 hover:bg-blue-700 text-white border-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 dark:border-blue-800"
-        variant="primary"
+        className='w-full border-blue-700 bg-blue-600 py-2.5 text-base font-medium text-white hover:bg-blue-700 dark:border-blue-800 dark:bg-blue-700 dark:hover:bg-blue-800'
+        variant='primary'
       >
         {isAdding ? (
-          <div className="flex items-center justify-center space-x-2">
-            <div className="w-4 h-4 border-t-2 border-r-2 border-white rounded-full animate-spin dark:border-gray-800"></div>
+          <div className='flex items-center justify-center space-x-2'>
+            <div className='h-4 w-4 animate-spin rounded-full border-t-2 border-r-2 border-white dark:border-gray-800'></div>
             <span>Adding...</span>
           </div>
         ) : isInCart ? (
-          <span className="flex items-center justify-center">
+          <span className='flex items-center justify-center'>
             <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-5 h-5 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+              xmlns='http://www.w3.org/2000/svg'
+              className='mr-2 h-5 w-5'
+              fill='none'
+              viewBox='0 0 24 24'
+              stroke='currentColor'
             >
               <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                strokeLinecap='round'
+                strokeLinejoin='round'
                 strokeWidth={2}
-                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                d='M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z'
               />
             </svg>
             Add More to Cart
           </span>
         ) : (
-          <span className="flex items-center justify-center">
+          <span className='flex items-center justify-center'>
             <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-5 h-5 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+              xmlns='http://www.w3.org/2000/svg'
+              className='mr-2 h-5 w-5'
+              fill='none'
+              viewBox='0 0 24 24'
+              stroke='currentColor'
             >
               <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                strokeLinecap='round'
+                strokeLinejoin='round'
                 strokeWidth={2}
-                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                d='M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z'
               />
             </svg>
             Add to Cart
@@ -193,7 +193,7 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
       </Button>
 
       {showSuccess && (
-        <div className="p-2 mt-2 text-sm font-medium text-center text-green-600 bg-green-100 rounded-md dark:bg-green-900 dark:text-green-300">
+        <div className='mt-2 rounded-md bg-green-100 p-2 text-center text-sm font-medium text-green-600 dark:bg-green-900 dark:text-green-300'>
           Added to cart successfully!
         </div>
       )}

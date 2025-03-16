@@ -1,7 +1,7 @@
-import { TRPCError } from "@trpc/server";
-import { randomUUID } from "crypto";
-import { z } from "zod";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { TRPCError } from '@trpc/server'
+import { randomUUID } from 'crypto'
+import { z } from 'zod'
+import { createTRPCRouter, protectedProcedure, publicProcedure } from '../trpc'
 
 export const productRouter = createTRPCRouter({
   // Get all products with optional filtering and pagination
@@ -14,14 +14,26 @@ export const productRouter = createTRPCRouter({
         search: z.string().optional(),
         minPrice: z.number().optional(),
         maxPrice: z.number().optional(),
-        sortBy: z.enum(["price", "name", "createdAt"]).optional().default("createdAt"),
-        sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
+        sortBy: z
+          .enum(['price', 'name', 'createdAt'])
+          .optional()
+          .default('createdAt'),
+        sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
         onlyActive: z.boolean().optional().default(true),
       })
     )
     .query(async ({ ctx, input }) => {
-      const { limit, cursor, search, minPrice, maxPrice, sortBy, sortOrder, onlyActive } = input;
-      
+      const {
+        limit,
+        cursor,
+        search,
+        minPrice,
+        maxPrice,
+        sortBy,
+        sortOrder,
+        onlyActive,
+      } = input
+
       const items = await ctx.prisma.product.findMany({
         take: limit + 1,
         cursor: cursor ? { id: cursor } : undefined,
@@ -40,12 +52,12 @@ export const productRouter = createTRPCRouter({
         orderBy: {
           [sortBy]: sortOrder,
         },
-      });
+      })
 
-      let nextCursor: typeof cursor | undefined = undefined;
+      let nextCursor: typeof cursor | undefined = undefined
       if (items.length > limit) {
-        const nextItem = items.pop();
-        nextCursor = nextItem!.id;
+        const nextItem = items.pop()
+        nextCursor = nextItem!.id
       }
 
       return {
@@ -54,23 +66,23 @@ export const productRouter = createTRPCRouter({
           price: item.price.toNumber(), // Convert Decimal to Number
         })),
         nextCursor,
-      };
+      }
     }),
 
   // Get a single product by ID
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const { id } = input;
+      const { id } = input
       const product = await ctx.prisma.product.findUnique({
         where: { id },
-      });
+      })
 
       if (!product) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Product not found",
-        });
+          code: 'NOT_FOUND',
+          message: 'Product not found',
+        })
       }
 
       return {
@@ -81,12 +93,14 @@ export const productRouter = createTRPCRouter({
 
   // Get featured products
   getFeatured: publicProcedure
-    .input(z.object({
-      limit: z.number().min(1).max(10).optional().default(5),
-    }))
+    .input(
+      z.object({
+        limit: z.number().min(1).max(10).optional().default(5),
+      })
+    )
     .query(async ({ ctx, input }) => {
-      const { limit } = input;
-      
+      const { limit } = input
+
       const products = await ctx.prisma.product.findMany({
         where: {
           isActive: true,
@@ -95,23 +109,25 @@ export const productRouter = createTRPCRouter({
           price: 'desc',
         },
         take: limit,
-      });
-      
+      })
+
       return products.map(product => ({
         ...product,
         price: product.price.toNumber(), // Convert Decimal to Number
-      }));
+      }))
     }),
 
   // Search products
   search: publicProcedure
-    .input(z.object({
-      query: z.string().min(1),
-      limit: z.number().min(1).max(20).optional().default(5),
-    }))
+    .input(
+      z.object({
+        query: z.string().min(1),
+        limit: z.number().min(1).max(20).optional().default(5),
+      })
+    )
     .query(async ({ ctx, input }) => {
-      const { query, limit } = input;
-      
+      const { query, limit } = input
+
       const products = await ctx.prisma.product.findMany({
         where: {
           isActive: true,
@@ -122,53 +138,57 @@ export const productRouter = createTRPCRouter({
           ],
         },
         take: limit,
-      });
-      
+      })
+
       return products.map(product => ({
         ...product,
         price: product.price.toNumber(), // Convert Decimal to Number
-      }));
+      }))
     }),
 
   // Create a new product
   create: protectedProcedure
-    .input(z.object({
-      name: z.string().min(1),
-      description: z.string().min(1),
-      price: z.number().min(0),
-      sku: z.string().min(1),
-      inventory: z.number().min(0),
-      isActive: z.boolean(),
-    }))
+    .input(
+      z.object({
+        name: z.string().min(1),
+        description: z.string().min(1),
+        price: z.number().min(0),
+        sku: z.string().min(1),
+        inventory: z.number().min(0),
+        isActive: z.boolean(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const product = await ctx.prisma.product.create({
         data: {
           id: randomUUID(),
           ...input,
         },
-      });
-      return product;
+      })
+      return product
     }),
 
   // Update an existing product
   update: protectedProcedure
-    .input(z.object({
-      id: z.string(),
-      data: z.object({
-        name: z.string().min(1),
-        description: z.string().optional(),
-        price: z.number().min(0),
-        sku: z.string().optional(),
-        inventory: z.number().min(0),
-        isActive: z.boolean(),
+    .input(
+      z.object({
+        id: z.string(),
+        data: z.object({
+          name: z.string().min(1),
+          description: z.string().optional(),
+          price: z.number().min(0),
+          sku: z.string().optional(),
+          inventory: z.number().min(0),
+          isActive: z.boolean(),
+        }),
       })
-    }))
+    )
     .mutation(async ({ ctx, input }) => {
       const product = await ctx.prisma.product.update({
         where: { id: input.id },
         data: input.data,
-      });
-      return product;
+      })
+      return product
     }),
 
   // Delete a product
@@ -177,8 +197,7 @@ export const productRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       await ctx.prisma.product.delete({
         where: { id: input.id },
-      });
-      return { success: true };
+      })
+      return { success: true }
     }),
-
-});
+})

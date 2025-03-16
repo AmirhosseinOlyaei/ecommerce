@@ -1,6 +1,6 @@
-"use client"
+'use client'
 
-import { useSupabase } from "@/components/auth/SupabaseProvider"
+import { useSupabase } from '@/components/auth/SupabaseProvider'
 import {
   ActivateIcon,
   Button,
@@ -9,10 +9,10 @@ import {
   HomeIcon,
   PlusIcon,
   TrashIcon,
-} from "@/components/ui/Button"
-import { api } from "@/lib/trpc/client"
-import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useState } from "react"
+} from '@/components/ui/Button'
+import { api } from '@/lib/trpc/client'
+import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
 
 export default function ProductManagementPage() {
   const { isLoading, isAuthenticated } = useSupabase()
@@ -23,7 +23,7 @@ export default function ProductManagementPage() {
   // Redirect to login if not authenticated and not loading
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push("/login")
+      router.push('/login')
     }
   }, [isLoading, isAuthenticated, router])
 
@@ -57,8 +57,8 @@ export default function ProductManagementPage() {
       // Refetch products to update the UI
       refetchProducts()
     },
-    onError: (error) => {
-      console.error("Update product status error:", error)
+    onError: error => {
+      console.error('Update product status error:', error)
       alert(`Failed to update product status: ${error.message}`)
     },
   })
@@ -71,13 +71,13 @@ export default function ProductManagementPage() {
   const handleDeleteProduct = (productId: string) => {
     if (
       confirm(
-        "Are you sure you want to delete this product? This action cannot be undone."
+        'Are you sure you want to delete this product? This action cannot be undone.'
       )
     ) {
       setIsDeleting(productId)
       // Currently disabled due to router limitations
       console.log(
-        "Delete product functionality is temporarily disabled",
+        'Delete product functionality is temporarily disabled',
         productId
       )
 
@@ -88,7 +88,7 @@ export default function ProductManagementPage() {
       setTimeout(() => {
         setIsDeleting(null)
         alert(
-          "Product deletion is currently disabled in this development version"
+          'Product deletion is currently disabled in this development version'
         )
       }, 1000)
     }
@@ -115,13 +115,13 @@ export default function ProductManagementPage() {
           sku: product.sku,
           inventory: product.inventory,
           isActive: newStatus,
-          description: "", // Maintain existing description
+          description: '', // Maintain existing description
         },
       })
     } catch (error) {
-      console.error("Error toggling product status:", error)
+      console.error('Error toggling product status:', error)
       alert(
-        `Failed to ${newStatus ? "activate" : "deactivate"} ${product.name}`
+        `Failed to ${newStatus ? 'activate' : 'deactivate'} ${product.name}`
       )
     }
   }
@@ -129,8 +129,8 @@ export default function ProductManagementPage() {
   // Show loading state
   if (isLoading || isNavigating) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="w-12 h-12 rounded-full border-t-2 border-b-2 border-gray-900 animate-spin dark:border-gray-100"></div>
+      <div className='flex min-h-screen items-center justify-center'>
+        <div className='h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-gray-900 dark:border-gray-100'></div>
       </div>
     )
   }
@@ -141,22 +141,22 @@ export default function ProductManagementPage() {
   }
 
   return (
-    <div className="p-6 mx-auto max-w-7xl">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+    <div className='mx-auto max-w-7xl p-6'>
+      <div className='mb-8 flex items-center justify-between'>
+        <h1 className='text-3xl font-bold text-gray-900 dark:text-gray-100'>
           Product Management
         </h1>
-        <div className="flex space-x-4">
+        <div className='flex space-x-4'>
           <Button
-            onClick={() => handleNavigation("/dashboard")}
-            variant="secondary"
+            onClick={() => handleNavigation('/dashboard')}
+            variant='secondary'
             icon={<HomeIcon />}
           >
             Back to Dashboard
           </Button>
           <Button
-            onClick={() => handleNavigation("/dashboard/products/new")}
-            variant="primary"
+            onClick={() => handleNavigation('/dashboard/products/new')}
+            variant='primary'
             icon={<PlusIcon />}
           >
             Add New Product
@@ -165,108 +165,108 @@ export default function ProductManagementPage() {
       </div>
 
       {isLoadingProducts ? (
-        <div className="flex justify-center items-center p-12">
-          <div className="w-12 h-12 rounded-full border-t-2 border-b-2 border-blue-500 animate-spin dark:border-blue-400"></div>
+        <div className='flex items-center justify-center p-12'>
+          <div className='h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500 dark:border-blue-400'></div>
         </div>
       ) : (
-        <div className="overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-900">
+        <div className='overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800'>
+          <div className='overflow-x-auto'>
+            <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
+              <thead className='bg-gray-50 dark:bg-gray-900'>
                 <tr>
                   <th
-                    scope="col"
-                    className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400"
+                    scope='col'
+                    className='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400'
                   >
                     Product
                   </th>
                   <th
-                    scope="col"
-                    className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400"
+                    scope='col'
+                    className='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400'
                   >
                     SKU
                   </th>
                   <th
-                    scope="col"
-                    className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400"
+                    scope='col'
+                    className='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400'
                   >
                     Price
                   </th>
                   <th
-                    scope="col"
-                    className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400"
+                    scope='col'
+                    className='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400'
                   >
                     Inventory
                   </th>
                   <th
-                    scope="col"
-                    className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400"
+                    scope='col'
+                    className='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400'
                   >
                     Status
                   </th>
                   <th
-                    scope="col"
-                    className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase dark:text-gray-400"
+                    scope='col'
+                    className='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400'
                   >
                     Last Updated
                   </th>
                   <th
-                    scope="col"
-                    className="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase dark:text-gray-400"
+                    scope='col'
+                    className='px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400'
                   >
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+              <tbody className='divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800'>
                 {products.length > 0 ? (
-                  products.map((product) => (
+                  products.map(product => (
                     <tr
                       key={product.id}
                       className={
-                        product.isActive ? "" : "bg-gray-50 dark:bg-gray-900/20"
+                        product.isActive ? '' : 'bg-gray-50 dark:bg-gray-900/20'
                       }
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <td className='px-6 py-4 whitespace-nowrap'>
+                        <div className='flex items-center'>
+                          <div className='ml-4'>
+                            <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
                               {product.name}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                      <td className='px-6 py-4 whitespace-nowrap'>
+                        <div className='text-sm text-gray-500 dark:text-gray-400'>
                           {product.sku}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-gray-100">
+                      <td className='px-6 py-4 whitespace-nowrap'>
+                        <div className='text-sm text-gray-900 dark:text-gray-100'>
                           ${parseFloat(product.price.toString()).toFixed(2)}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                      <td className='px-6 py-4 whitespace-nowrap'>
+                        <div className='text-sm text-gray-500 dark:text-gray-400'>
                           {product.inventory}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className='px-6 py-4 whitespace-nowrap'>
                         <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          className={`inline-flex rounded-full px-2 text-xs leading-5 font-semibold ${
                             product.isActive
-                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                              : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                           }`}
                         >
-                          {product.isActive ? "Active" : "Inactive"}
+                          {product.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap dark:text-gray-400">
+                      <td className='px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400'>
                         {new Date(product.updatedAt).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
-                        <div className="flex justify-end space-x-2">
+                      <td className='px-6 py-4 text-right text-sm font-medium whitespace-nowrap'>
+                        <div className='flex justify-end space-x-2'>
                           <Button
                             onClick={() =>
                               handleToggleStatus({
@@ -274,22 +274,22 @@ export default function ProductManagementPage() {
                                 isActive: product.isActive,
                                 name: product.name,
                                 price: product.price.toString(),
-                                sku: product.sku || "",
+                                sku: product.sku || '',
                                 inventory: product.inventory,
                                 updatedAt: product.updatedAt,
                               })
                             }
-                            variant={product.isActive ? "warning" : "success"}
-                            size="sm"
+                            variant={product.isActive ? 'warning' : 'success'}
+                            size='sm'
                             icon={
                               product.isActive ? (
-                                <DeactivateIcon className="w-3 h-3" />
+                                <DeactivateIcon className='h-3 w-3' />
                               ) : (
-                                <ActivateIcon className="w-3 h-3" />
+                                <ActivateIcon className='h-3 w-3' />
                               )
                             }
                           >
-                            {product.isActive ? "Deactivate" : "Activate"}
+                            {product.isActive ? 'Deactivate' : 'Activate'}
                           </Button>
                           <Button
                             onClick={() =>
@@ -297,22 +297,22 @@ export default function ProductManagementPage() {
                                 `/dashboard/products/edit/${product.id}`
                               )
                             }
-                            variant="primary"
-                            size="sm"
-                            icon={<EditIcon className="w-3 h-3" />}
+                            variant='primary'
+                            size='sm'
+                            icon={<EditIcon className='h-3 w-3' />}
                           >
                             Edit
                           </Button>
                           <Button
                             onClick={() => handleDeleteProduct(product.id)}
                             disabled={isDeleting === product.id}
-                            variant="danger"
-                            size="sm"
-                            icon={<TrashIcon className="w-3 h-3" />}
+                            variant='danger'
+                            size='sm'
+                            icon={<TrashIcon className='h-3 w-3' />}
                           >
                             {isDeleting === product.id
-                              ? "Deleting..."
-                              : "Delete"}
+                              ? 'Deleting...'
+                              : 'Delete'}
                           </Button>
                         </div>
                       </td>
@@ -322,7 +322,7 @@ export default function ProductManagementPage() {
                   <tr>
                     <td
                       colSpan={7}
-                      className="px-6 py-12 text-base text-center text-gray-500 dark:text-gray-400"
+                      className='px-6 py-12 text-center text-base text-gray-500 dark:text-gray-400'
                     >
                       No products found. Click &quot;Add New Product&quot; to
                       create one.

@@ -10,7 +10,7 @@ export function getSupabaseClient() {
     // Return a dummy client for SSR (it won't actually be used)
     return null
   }
-  
+
   if (!supabaseClientInstance) {
     // Initialize only once
     supabaseClientInstance = createBrowserClient(
@@ -19,9 +19,10 @@ export function getSupabaseClient() {
     )
     console.log('[Supabase] Created new client instance')
   }
-  
+
   return supabaseClientInstance
 }
 
 // For backwards compatibility with existing code
-export const supabase = typeof window !== 'undefined' ? getSupabaseClient() : null
+export const supabase =
+  typeof window !== 'undefined' ? getSupabaseClient() : null

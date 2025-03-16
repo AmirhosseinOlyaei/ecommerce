@@ -8,7 +8,7 @@ module.exports = {
       {
         protocol: 'https',
         hostname: 'source.unsplash.com',
-      }
+      },
     ],
   },
-};
+}

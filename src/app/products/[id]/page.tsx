@@ -1,6 +1,6 @@
-import { ProductDetail } from "@/components/products/ProductDetail"
-import { prisma } from "@/server/db"
-import { notFound } from "next/navigation"
+import { ProductDetail } from '@/components/products/ProductDetail'
+import { prisma } from '@/server/db'
+import { notFound } from 'next/navigation'
 
 interface ProductPageProps {
   params: Promise<{
@@ -33,7 +33,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       />
     )
   } catch (error) {
-    console.error("Error fetching product:", error)
+    console.error('Error fetching product:', error)
     notFound()
   }
 }

@@ -4,7 +4,7 @@ import { cache } from 'react'
 
 export const createServerSupabaseClient = cache((req: NextRequest) => {
   const cookieStore = req.cookies
-  
+
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

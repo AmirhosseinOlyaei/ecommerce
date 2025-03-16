@@ -1,7 +1,7 @@
 // This is the server component for Next.js 15 compatibility
 // It handles the params type requirements and renders the client component
 
-import { EditProductClientPage } from "./client"
+import { EditProductClientPage } from './client'
 
 // Important: The server component must be async to satisfy Next.js 15 type constraints
 export default async function EditProductPage({

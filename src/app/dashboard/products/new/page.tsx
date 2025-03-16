@@ -1,10 +1,10 @@
-"use client"
+'use client'
 
-import { useSupabase } from "@/components/auth/SupabaseProvider"
-import { ProductForm } from "@/components/dashboard/ProductForm"
-import { Button, HomeIcon, ListIcon } from "@/components/ui/Button"
-import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useState } from "react"
+import { useSupabase } from '@/components/auth/SupabaseProvider'
+import { ProductForm } from '@/components/dashboard/ProductForm'
+import { Button, HomeIcon, ListIcon } from '@/components/ui/Button'
+import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
 
 export default function NewProductPage() {
   const { isLoading, isAuthenticated } = useSupabase()
@@ -28,15 +28,15 @@ export default function NewProductPage() {
   // Redirect to login if not authenticated and not loading
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      handleNavigation("/login")
+      handleNavigation('/login')
     }
   }, [isLoading, isAuthenticated, handleNavigation])
 
   // Show loading state
   if (isLoading || isNavigating) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="w-12 h-12 rounded-full border-t-2 border-b-2 border-gray-900 animate-spin dark:border-gray-100"></div>
+      <div className='flex min-h-screen items-center justify-center'>
+        <div className='h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-gray-900 dark:border-gray-100'></div>
       </div>
     )
   }
@@ -47,27 +47,27 @@ export default function NewProductPage() {
   }
 
   return (
-    <div className="flex flex-col justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
-      <div className="container p-6 mx-auto max-w-7xl">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+    <div className='flex min-h-screen flex-col items-center justify-center bg-gray-100 dark:bg-gray-900'>
+      <div className='container mx-auto max-w-7xl p-6'>
+        <div className='mb-8 flex items-center justify-between'>
+          <h1 className='text-3xl font-bold text-gray-900 dark:text-gray-100'>
             Add New Product
           </h1>
-          <div className="flex items-center space-x-4">
+          <div className='flex items-center space-x-4'>
             <Button
-              href="/dashboard/products"
-              variant="secondary"
+              href='/dashboard/products'
+              variant='secondary'
               icon={<ListIcon />}
             >
               Back to Products
             </Button>
-            <Button href="/dashboard" variant="primary" icon={<HomeIcon />}>
+            <Button href='/dashboard' variant='primary' icon={<HomeIcon />}>
               Dashboard
             </Button>
           </div>
         </div>
 
-        <div className="p-6 mb-6 bg-white rounded-lg shadow dark:bg-gray-800 dark:shadow-gray-700">
+        <div className='mb-6 rounded-lg bg-white p-6 shadow dark:bg-gray-800 dark:shadow-gray-700'>
           <ProductForm />
         </div>
       </div>

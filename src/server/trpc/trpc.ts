@@ -1,10 +1,10 @@
-import { initTRPC, TRPCError } from "@trpc/server";
-import superjson from "superjson";
-import { ZodError } from "zod";
-import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
-import { createServerClient } from '@supabase/ssr';
+import { initTRPC, TRPCError } from '@trpc/server'
+import superjson from 'superjson'
+import { ZodError } from 'zod'
+import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch'
+import { createServerClient } from '@supabase/ssr'
 
-import { prisma } from "@/server/db";
+import { prisma } from '@/server/db'
 
 /**
  * 1. CONTEXT
@@ -22,11 +22,11 @@ export const createTRPCContext = async (opts: FetchCreateContextFnOptions) => {
         get(name) {
           // Safely handle headers which may be structured differently
           // depending on the environment
-          const cookies = opts.req.headers.get('cookie') || '';
+          const cookies = opts.req.headers.get('cookie') || ''
           return cookies
             .split(';')
             .find(c => c.trim().startsWith(`${name}=`))
-            ?.split('=')[1];
+            ?.split('=')[1]
         },
         set() {
           // We don't need to set cookies in this context
@@ -36,30 +36,32 @@ export const createTRPCContext = async (opts: FetchCreateContextFnOptions) => {
         },
       },
     }
-  );
+  )
 
   try {
     // Get the user session
-    const { data: { session } } = await supabase.auth.getSession();
-    const user = session?.user || null;
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    const user = session?.user || null
 
     return {
       session: user ? { user } : null,
       prisma,
       req: opts.req,
-      supabase
-    };
+      supabase,
+    }
   } catch (error) {
-    console.error('Error in tRPC context creation:', error);
+    console.error('Error in tRPC context creation:', error)
     // Return a default context even if authentication fails
     return {
       session: null,
       prisma,
       req: opts.req,
-      supabase
-    };
+      supabase,
+    }
   }
-};
+}
 
 /**
  * 2. INITIALIZATION
@@ -76,9 +78,9 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
         zodError:
           error.cause instanceof ZodError ? error.cause.flatten() : null,
       },
-    };
+    }
   },
-});
+})
 
 /**
  * 3. ROUTER & PROCEDURE
@@ -91,7 +93,7 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
  * This is how you create new routers and subrouters in your tRPC API
  * @see https://trpc.io/docs/router
  */
-export const createTRPCRouter = t.router;
+export const createTRPCRouter = t.router
 
 /**
  * Public (unauthed) procedure
@@ -100,7 +102,7 @@ export const createTRPCRouter = t.router;
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
  */
-export const publicProcedure = t.procedure;
+export const publicProcedure = t.procedure
 
 /**
  * Reusable middleware that enforces users are logged in before running the
@@ -108,15 +110,15 @@ export const publicProcedure = t.procedure;
  */
 const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
   if (!ctx.session?.user) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
+    throw new TRPCError({ code: 'UNAUTHORIZED' })
   }
   return next({
     ctx: {
       // infers the `session` as non-nullable
       session: { ...ctx.session, user: ctx.session.user },
     },
-  });
-});
+  })
+})
 
 /**
  * Protected (authed) procedure
@@ -127,4 +129,4 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
+export const protectedProcedure = t.procedure.use(enforceUserIsAuthed)

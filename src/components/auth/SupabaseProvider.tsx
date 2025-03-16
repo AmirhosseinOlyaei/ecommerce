@@ -1,6 +1,6 @@
-"use client"
+'use client'
 
-import { useRouter, usePathname } from "next/navigation"
+import { useRouter, usePathname } from 'next/navigation'
 import {
   createContext,
   useContext,
@@ -8,9 +8,9 @@ import {
   useState,
   useRef,
   useCallback,
-} from "react"
-import type { Session, User, AuthChangeEvent } from "@supabase/supabase-js"
-import { getSupabaseClient } from "@/lib/supabase/client"
+} from 'react'
+import type { Session, User, AuthChangeEvent } from '@supabase/supabase-js'
+import { getSupabaseClient } from '@/lib/supabase/client'
 
 type SupabaseContextType = {
   user: User | null
@@ -44,7 +44,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     (path: string) => {
       if (isRedirecting.current) {
         console.log(
-          "[SupabaseProvider] Skipping redirect as one is already in progress"
+          '[SupabaseProvider] Skipping redirect as one is already in progress'
         )
         return
       }
@@ -69,12 +69,12 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   )
 
   useEffect(() => {
-    console.log("[SupabaseProvider] Initializing")
+    console.log('[SupabaseProvider] Initializing')
 
     // Get the Supabase client using our singleton pattern
     const supabase = getSupabaseClient()
     if (!supabase) {
-      console.error("[SupabaseProvider] Failed to get Supabase client")
+      console.error('[SupabaseProvider] Failed to get Supabase client')
       setIsLoading(false)
       return () => {}
     }
@@ -82,25 +82,25 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     // Get initial user
     const getUserData = async () => {
       try {
-        console.log("[SupabaseProvider] Getting initial user")
+        console.log('[SupabaseProvider] Getting initial user')
         let fetchedUser
         const {
           data: { user: secureUser },
         } = await supabase.auth.getUser()
         if (secureUser) {
           fetchedUser = secureUser
-          console.log("[SupabaseProvider] Retrieved user via getUser", {
+          console.log('[SupabaseProvider] Retrieved user via getUser', {
             userId: secureUser.id,
           })
         } else {
           console.log(
-            "[SupabaseProvider] getUser returned null, falling back to getSession"
+            '[SupabaseProvider] getUser returned null, falling back to getSession'
           )
           const {
             data: { session },
           } = await supabase.auth.getSession()
           fetchedUser = session?.user ?? null
-          console.log("[SupabaseProvider] Retrieved user via getSession", {
+          console.log('[SupabaseProvider] Retrieved user via getSession', {
             userId: fetchedUser?.id,
           })
         }
@@ -110,11 +110,11 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         setSession(null)
         setIsLoading(false)
 
-        if (fetchedUser && (pathname === "/" || pathname === "/login")) {
-          safeRedirect("/dashboard")
+        if (fetchedUser && (pathname === '/' || pathname === '/login')) {
+          safeRedirect('/dashboard')
         }
       } catch (error) {
-        console.error("[SupabaseProvider] Error getting user:", error)
+        console.error('[SupabaseProvider] Error getting user:', error)
         setIsLoading(false)
       }
     }
@@ -125,14 +125,14 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
       (event: AuthChangeEvent, session: Session | null) => {
-        console.log("[SupabaseProvider] Auth state changed:", event, {
+        console.log('[SupabaseProvider] Auth state changed:', event, {
           hasSession: !!session,
           userId: session?.user?.id,
           email: session?.user?.email,
           currentPath: pathname,
         })
 
-        if (event === "SIGNED_IN") {
+        if (event === 'SIGNED_IN') {
           supabase.auth
             .getUser()
             .then(
@@ -144,14 +144,14 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
                 let updatedUser: User | null = secureUser
                 if (!updatedUser) {
                   console.log(
-                    "[SupabaseProvider] getUser returned null on auth change, falling back to getSession"
+                    '[SupabaseProvider] getUser returned null on auth change, falling back to getSession'
                   )
                   const {
                     data: { session },
                   } = await supabase.auth.getSession()
                   updatedUser = session?.user ?? null
                 }
-                console.log("[SupabaseProvider] Updated user after sign in:", {
+                console.log('[SupabaseProvider] Updated user after sign in:', {
                   hasUser: !!updatedUser,
                   userId: updatedUser?.id,
                 })
@@ -160,34 +160,34 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
 
                 if (
                   updatedUser &&
-                  (pathname === "/" || pathname === "/login")
+                  (pathname === '/' || pathname === '/login')
                 ) {
                   console.log(
-                    "[SupabaseProvider] User signed in, redirecting to dashboard"
+                    '[SupabaseProvider] User signed in, redirecting to dashboard'
                   )
-                  safeRedirect("/dashboard")
+                  safeRedirect('/dashboard')
                 }
               }
             )
-        } else if (event === "SIGNED_OUT") {
+        } else if (event === 'SIGNED_OUT') {
           console.log(
-            "[SupabaseProvider] User signed out, redirecting to login"
+            '[SupabaseProvider] User signed out, redirecting to login'
           )
           setUser(null)
           setIsAuthenticated(false)
-          safeRedirect("/login")
+          safeRedirect('/login')
         }
       }
     )
 
     return () => {
-      console.log("[SupabaseProvider] Cleaning up subscription")
+      console.log('[SupabaseProvider] Cleaning up subscription')
       subscription.unsubscribe()
     }
   }, [pathname, safeRedirect])
 
   const signOut = async () => {
-    console.log("[SupabaseProvider] Signing out user")
+    console.log('[SupabaseProvider] Signing out user')
     const supabase = getSupabaseClient()
     if (supabase) {
       await supabase.auth.signOut()
@@ -195,7 +195,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     setIsAuthenticated(false)
     setUser(null)
     setSession(null)
-    safeRedirect("/login")
+    safeRedirect('/login')
   }
 
   const value = {

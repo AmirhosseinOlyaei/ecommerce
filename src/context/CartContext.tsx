@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import {
   createContext,
@@ -6,7 +6,7 @@ import {
   useContext,
   useEffect,
   useState,
-} from "react"
+} from 'react'
 
 // Simple cart item structure without database dependencies
 export type CartItem = {
@@ -32,7 +32,7 @@ const CartContext = createContext<CartContextType | null>(null)
 export const useCart = () => {
   const context = useContext(CartContext)
   if (!context) {
-    throw new Error("useCart must be used within a CartProvider")
+    throw new Error('useCart must be used within a CartProvider')
   }
   return context
 }
@@ -47,23 +47,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // Only run this once
       if (isInitialized) return
 
-      const savedCart = localStorage.getItem("cart")
+      const savedCart = localStorage.getItem('cart')
       if (savedCart) {
         const parsedCart = JSON.parse(savedCart)
         // Validate cart data before setting
         if (
           Array.isArray(parsedCart) &&
           parsedCart.every(
-            (item) =>
-              typeof item === "object" &&
-              typeof item.productId === "string" &&
-              typeof item.name === "string" &&
+            item =>
+              typeof item === 'object' &&
+              typeof item.productId === 'string' &&
+              typeof item.name === 'string' &&
               !isNaN(Number(item.price)) &&
               !isNaN(Number(item.quantity))
           )
         ) {
           // Ensure prices are always numbers
-          const normalizedCart = parsedCart.map((item) => ({
+          const normalizedCart = parsedCart.map(item => ({
             ...item,
             price: Number(item.price),
             quantity: Number(item.quantity),
@@ -71,14 +71,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
           setItems(normalizedCart)
         } else {
           // Invalid cart data - clear it
-          console.warn("Invalid cart data found in localStorage, clearing cart")
-          localStorage.removeItem("cart")
+          console.warn('Invalid cart data found in localStorage, clearing cart')
+          localStorage.removeItem('cart')
         }
       }
       setIsInitialized(true)
     } catch (error) {
-      console.error("Failed to load cart from localStorage:", error)
-      localStorage.removeItem("cart") // Clear potentially corrupted data
+      console.error('Failed to load cart from localStorage:', error)
+      localStorage.removeItem('cart') // Clear potentially corrupted data
     }
   }, [isInitialized])
 
@@ -90,30 +90,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (items.length > 0) {
       try {
         // Ensure all prices are valid numbers before saving
-        const sanitizedItems = items.map((item) => ({
+        const sanitizedItems = items.map(item => ({
           ...item,
           price: Number(item.price),
           quantity: Number(item.quantity),
         }))
-        localStorage.setItem("cart", JSON.stringify(sanitizedItems))
+        localStorage.setItem('cart', JSON.stringify(sanitizedItems))
       } catch (error) {
-        console.error("Failed to save cart to localStorage:", error)
+        console.error('Failed to save cart to localStorage:', error)
       }
     } else {
-      localStorage.removeItem("cart")
+      localStorage.removeItem('cart')
     }
   }, [items, isInitialized])
 
   const addToCart = (newItem: CartItem) => {
     // Ensure price is a valid number
     if (isNaN(Number(newItem.price)) || Number(newItem.price) <= 0) {
-      console.error("Invalid price for item:", newItem)
+      console.error('Invalid price for item:', newItem)
       return
     }
 
     // Ensure quantity is valid
     if (isNaN(Number(newItem.quantity)) || Number(newItem.quantity) <= 0) {
-      console.error("Invalid quantity for item:", newItem)
+      console.error('Invalid quantity for item:', newItem)
       return
     }
 
@@ -124,10 +124,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       quantity: Number(newItem.quantity),
     }
 
-    setItems((current) => {
+    setItems(current => {
       // Check if item already exists in cart
       const existingItemIndex = current.findIndex(
-        (item) => item.productId === normalizedItem.productId
+        item => item.productId === normalizedItem.productId
       )
 
       if (existingItemIndex >= 0) {
@@ -143,9 +143,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }
 
   const removeFromCart = (productId: string) => {
-    setItems((current) =>
-      current.filter((item) => item.productId !== productId)
-    )
+    setItems(current => current.filter(item => item.productId !== productId))
   }
 
   const updateQuantity = (productId: string, quantity: number) => {
@@ -155,8 +153,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    setItems((current) =>
-      current.map((item) =>
+    setItems(current =>
+      current.map(item =>
         item.productId === productId ? { ...item, quantity } : item
       )
     )
@@ -164,7 +162,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = () => {
     setItems([])
-    localStorage.removeItem("cart")
+    localStorage.removeItem('cart')
   }
 
   // Calculate derived values with validation to prevent NaN
