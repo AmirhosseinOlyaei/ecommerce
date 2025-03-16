@@ -24,11 +24,13 @@ export function BuyNowButton({ product }: BuyNowButtonProps) {
     onSuccess: (data) => {
       toast.success("Purchase successful!")
 
-      // Format the total to ensure it's a valid number
-      const formattedTotal =
-        typeof data.total === "number" && !isNaN(data.total)
-          ? data.total.toFixed(2)
-          : "0.00"
+      // Get the price of the product for the success page
+      const price =
+        typeof product.price === "number"
+          ? product.price
+          : parseFloat(product.price?.toString() || "0")
+
+      const formattedTotal = (price * 1).toFixed(2)
 
       // Redirect to success page with properly formatted total
       router.push(
