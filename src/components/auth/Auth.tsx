@@ -47,7 +47,7 @@ export function Auth({ view, redirectTo = '/dashboard' }: AuthProps) {
         appearance={{ theme: ThemeSupa }}
         theme='light'
         showLinks={true}
-        providers={['google']}
+        providers={[/* 'google' */]}
         redirectTo={callbackUrl}
         onlyThirdPartyProviders={false}
       />
