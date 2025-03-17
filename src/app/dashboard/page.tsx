@@ -60,8 +60,8 @@ export default function DashboardPage() {
   if (isLoading || isNavigating) {
     console.log('[Dashboard] Showing loading spinner')
     return (
-      <div className='flex min-h-screen items-center justify-center'>
-        <div className='h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-gray-900 dark:border-gray-100'></div>
+      <div className='flex items-center justify-center min-h-screen'>
+        <div className='w-12 h-12 border-t-2 border-b-2 border-gray-900 rounded-full animate-spin dark:border-gray-100'></div>
       </div>
     )
   }
@@ -73,14 +73,14 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className='mx-auto max-w-7xl p-6'>
-      <div className='mb-8 flex items-center justify-between'>
+    <div className='p-6 mx-auto max-w-7xl'>
+      <div className='flex items-center justify-between mb-8'>
         <h1 className='text-3xl font-bold text-gray-900 dark:text-gray-100'>
           Dashboard
         </h1>
         <div className='flex items-center space-x-4'>
           <Button
-            onClick={() => router.push('/products')}
+            onClick={() => handleNavigation('/products')}
             variant='primary'
             icon={<ListIcon />}
           >
@@ -99,7 +99,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className='mb-6 max-w-7xl rounded-lg bg-white p-6 shadow dark:bg-gray-800 dark:shadow-gray-700'>
+      <div className='p-6 mb-6 bg-white rounded-lg shadow max-w-7xl dark:bg-gray-800 dark:shadow-gray-700'>
         <h2 className='mb-4 text-xl font-semibold text-gray-900 dark:text-gray-100'>
           User Profile
         </h2>
@@ -125,12 +125,12 @@ export default function DashboardPage() {
 
       <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
         {/* Product Management Card */}
-        <div className='overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800'>
+        <div className='overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800'>
           <div className='p-6'>
             <div className='flex items-center'>
-              <div className='flex-shrink-0 rounded-md bg-blue-500 p-3'>
+              <div className='flex-shrink-0 p-3 bg-blue-500 rounded-md'>
                 <svg
-                  className='h-6 w-6 text-white'
+                  className='w-6 h-6 text-white'
                   fill='none'
                   viewBox='0 0 24 24'
                   stroke='currentColor'
@@ -164,13 +164,14 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Orders Card */}
-        <div className='overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800'>
+        {/* Orders Card - Commented out as it's not functional */}
+        {/*
+        <div className='overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800'>
           <div className='p-6'>
             <div className='flex items-center'>
-              <div className='flex-shrink-0 rounded-md bg-indigo-500 p-3'>
+              <div className='flex-shrink-0 p-3 bg-indigo-500 rounded-md'>
                 <svg
-                  className='h-6 w-6 text-white'
+                  className='w-6 h-6 text-white'
                   fill='none'
                   viewBox='0 0 24 24'
                   stroke='currentColor'
@@ -203,14 +204,16 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+        */}
 
-        {/* Store Settings */}
-        <div className='overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800'>
+        {/* Store Settings - Commented out as it's not functional */}
+        {/*
+        <div className='overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800'>
           <div className='p-6'>
             <div className='flex items-center'>
-              <div className='flex-shrink-0 rounded-md bg-purple-500 p-3'>
+              <div className='flex-shrink-0 p-3 bg-purple-500 rounded-md'>
                 <svg
-                  className='h-6 w-6 text-white'
+                  className='w-6 h-6 text-white'
                   fill='none'
                   viewBox='0 0 24 24'
                   stroke='currentColor'
@@ -243,6 +246,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+        */}
       </div>
 
       <div className='mt-6 text-right'></div>
