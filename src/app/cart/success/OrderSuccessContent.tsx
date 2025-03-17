@@ -8,8 +8,8 @@ import { useEffect, useState } from 'react'
 export default function OrderSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const orderId = searchParams.get('orderId') || 'N/A'
-  const rawTotal = searchParams.get('total') || '0'
+  const orderId = searchParams?.get('orderId') || 'N/A'
+  const rawTotal = searchParams?.get('total') || '0'
   const [formattedTotal, setFormattedTotal] = useState('0.00')
   const { isAuthenticated } = useSupabase()
 
@@ -38,12 +38,12 @@ export default function OrderSuccessContent() {
 
   return (
     <div className='flex min-h-[70vh] flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8'>
-      <div className='w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-lg'>
+      <div className='w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-lg'>
         <div className='text-center'>
-          <div className='mb-4 flex justify-center'>
-            <div className='rounded-full bg-green-100 p-3'>
+          <div className='flex justify-center mb-4'>
+            <div className='p-3 bg-green-100 rounded-full'>
               <svg
-                className='h-12 w-12 text-green-600'
+                className='w-12 h-12 text-green-600'
                 xmlns='http://www.w3.org/2000/svg'
                 fill='none'
                 viewBox='0 0 24 24'
@@ -66,12 +66,12 @@ export default function OrderSuccessContent() {
           </p>
         </div>
 
-        <div className='border-t border-b py-4'>
-          <div className='my-2 flex justify-between'>
+        <div className='py-4 border-t border-b'>
+          <div className='flex justify-between my-2'>
             <span className='font-medium'>Order ID:</span>
             <span className='text-gray-600'>{orderId}</span>
           </div>
-          <div className='my-2 flex justify-between'>
+          <div className='flex justify-between my-2'>
             <span className='font-medium'>Total Amount:</span>
             <span className='text-gray-600'>${formattedTotal}</span>
           </div>
@@ -87,16 +87,16 @@ export default function OrderSuccessContent() {
           </p>
         </div>
 
-        <div className='mt-6 flex justify-between space-x-3'>
+        <div className='flex justify-between mt-6 space-x-3'>
           <Link
             href='/orders'
-            className='flex-1 rounded-md bg-blue-600 px-4 py-2 text-center text-white transition duration-200 hover:bg-blue-700'
+            className='flex-1 px-4 py-2 text-center text-white transition duration-200 bg-blue-600 rounded-md hover:bg-blue-700'
           >
             View My Orders
           </Link>
           <Link
             href='/products'
-            className='flex-1 rounded-md bg-purple-600 px-4 py-2 text-center text-white transition duration-200 hover:bg-purple-700'
+            className='flex-1 px-4 py-2 text-center text-white transition duration-200 bg-purple-600 rounded-md hover:bg-purple-700'
           >
             Continue Shopping
           </Link>

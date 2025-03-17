@@ -16,8 +16,8 @@ export default function OrderSuccessPage() {
 function OrderSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const orderId = searchParams.get('orderId') || 'N/A'
-  const total = searchParams.get('total') || '0.00'
+  const orderId = searchParams?.get('orderId') || 'N/A'
+  const total = searchParams?.get('total') || '0.00'
   const { isAuthenticated } = useSupabase()
 
   // If not authenticated, redirect to login
@@ -29,12 +29,12 @@ function OrderSuccessContent() {
 
   return (
     <div className='flex min-h-[70vh] flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8'>
-      <div className='w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-lg'>
+      <div className='w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-lg'>
         <div className='text-center'>
-          <div className='mb-4 flex justify-center'>
-            <div className='rounded-full bg-green-100 p-3'>
+          <div className='flex justify-center mb-4'>
+            <div className='p-3 bg-green-100 rounded-full'>
               <svg
-                className='h-12 w-12 text-green-600'
+                className='w-12 h-12 text-green-600'
                 xmlns='http://www.w3.org/2000/svg'
                 fill='none'
                 viewBox='0 0 24 24'
@@ -57,12 +57,12 @@ function OrderSuccessContent() {
           </p>
         </div>
 
-        <div className='border-t border-b py-4'>
-          <div className='my-2 flex justify-between'>
+        <div className='py-4 border-t border-b'>
+          <div className='flex justify-between my-2'>
             <span className='font-medium'>Order ID:</span>
             <span className='text-gray-600'>{orderId}</span>
           </div>
-          <div className='my-2 flex justify-between'>
+          <div className='flex justify-between my-2'>
             <span className='font-medium'>Total Amount:</span>
             <span className='text-gray-600'>${total}</span>
           </div>
@@ -78,16 +78,16 @@ function OrderSuccessContent() {
           </p>
         </div>
 
-        <div className='mt-6 flex flex-col space-y-3'>
+        <div className='flex flex-col mt-6 space-y-3'>
           <Link
             href='/products'
-            className='rounded-md bg-purple-600 px-4 py-2 text-center text-white transition duration-200 hover:bg-purple-700'
+            className='px-4 py-2 text-center text-white transition duration-200 bg-purple-600 rounded-md hover:bg-purple-700'
           >
             Continue Shopping
           </Link>
           <Link
             href='/dashboard'
-            className='rounded-md border border-gray-300 bg-white px-4 py-2 text-center text-gray-700 transition duration-200 hover:bg-gray-50'
+            className='px-4 py-2 text-center text-gray-700 transition duration-200 bg-white border border-gray-300 rounded-md hover:bg-gray-50'
           >
             Go to Dashboard
           </Link>
