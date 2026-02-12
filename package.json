@@ -23,7 +23,7 @@
     "@trpc/react-query": "^10.45.2",
     "@trpc/server": "^10.45.2",
     "bcryptjs": "^3.0.2",
-    "next": "15.2.2",
+    "next": "16.1.6",
     "prisma": "^6.5.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -38,7 +38,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.2.2",
+    "eslint-config-next": "16.1.6",
     "tailwindcss": "^4.0.13",
     "typescript": "^5"
   },
